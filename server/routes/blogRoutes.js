@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get user's blogs
-router.get('/user', auth, async (req, res) => {
+router.get('/user/post', auth, async (req, res) => {
   try {
     const blogs = await Blog.find({ author: req.user._id })
       .sort('-createdAt');
@@ -144,5 +144,7 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Error fetching blog' });
   }
 });
+
+
 
 export default router;

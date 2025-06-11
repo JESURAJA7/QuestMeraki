@@ -10,7 +10,7 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const API_Base_URL = 'http://localhost:5000';
+  const API_Base_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

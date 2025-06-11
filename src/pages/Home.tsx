@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import FeaturedPost from '../components/FeaturedPost';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
+const API_URL = import.meta.env.VITE_API_URL;
+//console.log('API_URL:', API_URL);
 type Post = {
   _id: string;
   title: string;

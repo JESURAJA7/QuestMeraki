@@ -11,7 +11,12 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://questmeraki.netlify.app', 'http://localhost:5173/'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
+
 app.use(express.json());
 
 // MongoDB Connection

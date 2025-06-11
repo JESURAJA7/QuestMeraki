@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
-
+import dotenv from 'dotenv';
+dotenv.config();
 const connectDB = async () => {
   try {
-    await mongoose.connect("mongodb+srv://Quest:Quest%401234@cluster0.iuoi0th.mongodb.net/?retryWrites=true&w=majority", {
+    await mongoose.connect(process.env.MONGODB_URI||"mongodb+srv://Quest:Quest%401234@cluster0.iuoi0th.mongodb.net/?retryWrites=true&w=majority", {
      useNewUrlParser: true,
       useUnifiedTopology: true
     });

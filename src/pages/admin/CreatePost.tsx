@@ -8,7 +8,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 
 // Use environment variable directly if available, fallback to localhost
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL ;
 
 export default function CreateBlog() {
   
@@ -69,7 +69,7 @@ export default function CreateBlog() {
       }
       console.log('Submitting form data:', { formData });
       console.log("token", localStorage.getItem('token'));
-      const response = await fetch('http://localhost:5000/api/blogs', {
+      const response = await fetch(`${API_URL}/blogs`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

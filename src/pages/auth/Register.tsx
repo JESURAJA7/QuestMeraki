@@ -11,10 +11,11 @@ export default function Register() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+   const API_URL = import.meta.env.VITE_API_URL;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/register', {
+      const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),

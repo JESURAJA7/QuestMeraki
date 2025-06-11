@@ -7,6 +7,8 @@ import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function CreateBlog() {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
@@ -61,7 +63,7 @@ export default function CreateBlog() {
         formData.append('image', imageFile);
       }
 
-      const response = await fetch('http://localhost:5000/api/blogs', {
+      const response = await fetch(`${API_URL}/blogs`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

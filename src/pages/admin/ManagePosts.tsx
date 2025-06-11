@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL;
 interface Post {
   id: string;
   title: string;
@@ -17,7 +18,7 @@ export default function ManagePosts() {
     // TODO: Implement actual posts fetch
     const fetchPosts = async () => {
       try {
-        const response = await fetch('/api/posts', {
+        const response = await fetch(`${API_URL}/blogs/user/post`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
           },
@@ -36,7 +37,7 @@ export default function ManagePosts() {
 
   const handleStatusChange = async (postId: string, newStatus: 'published' | 'rejected') => {
     try {
-      const response = await fetch(`/api/posts/${postId}/status`, {
+      const response = await fetch(`${API_URL}/blogs/${postId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ export default function ManagePosts() {
     if (!confirm('Are you sure you want to delete this post?')) return;
 
     try {
-      const response = await fetch(`/api/posts/${postId}`, {
+      const response = await fetch(`${API_URL}/blogs/${postId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
