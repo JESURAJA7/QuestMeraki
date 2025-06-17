@@ -3,6 +3,7 @@ import { Menu, Search, X, User as UserIcon } from 'lucide-react';
 import { useState } from 'react';
 import SearchBar from './SearchBar';
 import { useAuth } from '../hooks/useAuth';
+import logoimg from '../assets/images/image.png'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,28 +14,29 @@ export default function Navbar() {
   const categories = ['Technology', 'Travel', 'Food', 'Lifestyle'];
 
   return (
-    <nav className="bg-gray-100 shadow-md">
+    <nav className="bg-white shadow-lg ">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-           <img src='https://res.cloudinary.com/dczicfhcv/image/upload/v1749035483/quest_logo_jezezb.jpg' alt="Logo" className="h-18 w-12 " />
-            <span className="text-2xl font-bold text-indigo-600">QuestMeraki</span>
+           <img src={logoimg} alt="Logo" className="h-18 w-12 " />
+              <div className="flex items-center space-x-2">
+            
+            <span className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent animate-pulse">
+              QuestMeraki
+            </span>
+          </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-indigo-600">Home</Link>
-            {categories.map((category) => (
-              <Link
-                key={category}
-                to={`/category/${category.toLowerCase()}`}
-                className="text-gray-700 hover:text-indigo-600"
-              >
-                {category}
-              </Link>
-            ))}
+           <div className="hidden md:flex items-center space-x-8">
+            <Link to="/" className="text-gray-700 hover:text-indigo-600 transition-colors">Home</Link>
+            <Link to="/blogs" className="text-gray-700 hover:text-indigo-600 transition-colors">Blogs</Link>
+             <Link to="/about" className="text-gray-700 hover:text-indigo-600 transition-colors">About</Link>
+            <Link to="/contact" className="text-gray-700 hover:text-indigo-600 transition-colors">Contact</Link>
           </div>
+
+        
 
           {/* Search and Profile */}
           <div className="flex items-center space-x-4">
@@ -148,6 +150,7 @@ export default function Navbar() {
           </div>
         )}
       </div>
+    
     </nav>
   );
 }

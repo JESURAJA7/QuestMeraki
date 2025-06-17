@@ -16,7 +16,7 @@ export default function AdminLogin() {
     e.preventDefault();
     try {
       // TODO: Implement actual login API call
-      const response = await fetch(`${API_Base_URL}/api/admin/login`, {
+      const response = await fetch(`${API_Base_URL}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -26,6 +26,7 @@ export default function AdminLogin() {
         const { token, user } = await response.json();
         login(token, user);
         navigate('/admin');
+        console.log('Admin token:', token);
       } else {
         setError('Invalid credentials');
       }

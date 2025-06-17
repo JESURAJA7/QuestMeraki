@@ -10,6 +10,7 @@ const router = express.Router();
 router.post('/', auth, upload.single('image'), async (req, res) => {
   try {
     const { title,subtitle, content, category } = req.body;
+    console.log('Creating blog post:', title, subtitle, content, category);
     
     if (!req.file) {
       return res.status(400).json({ error: 'Image is required' });
@@ -90,6 +91,7 @@ router.patch('/:id/status', auth, async (req, res) => {
     }
 
     const { status } = req.body;
+    console.log('Updating blog status:', req.params.id, status);
     const blog = await Blog.findByIdAndUpdate(
       req.params.id,
       { status, updatedAt: Date.now() },
@@ -130,20 +132,136 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 // Get blog by ID
-router.get('/:id', async (req, res) => {
+
+
+router.get('/u/:id', auth, async (req, res) => {
   try {
-    const blog = await Blog.findById(req.params.id)
-      .populate('author', 'name');
-    
-    if (!blog || blog.status !== 'published') {
-      return res.status(404).json({ error: 'Blog not found or not published' });
+    console.log('Fetching blog with ID:', req.params.id);
+    const blog = await Blog.findById(req.params.id).populate('author', 'name');
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog post not found' });
     }
-    
     res.json(blog);
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching blog' });
+    res.status(500).json({ error: error.message });
   }
 });
+
+// Update blog post
+router.put('/:id', auth, upload.single('image'), async (req, res) => {
+  try {
+    const { title, content, category } = req.body;
+    const blog = await Blog.findById(req.params.id);
+    
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog post not found' });
+    }
+
+    // Check if user is admin or the author of the post
+    if (req.user.role !== 'admin' && blog.author.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to edit this post' });
+    }
+
+    let imageUrl = blog.imageUrl;
+
+    // Handle image upload if new image is provided
+    if (req.file) {
+      try {
+        // Delete old image from Cloudinary if it exists
+        if (blog.imageUrl) {
+          const publicId = blog.imageUrl.split('/').pop().split('.')[0];
+          await cloudinary.uploader.destroy(publicId);
+        }
+
+        // Upload new image
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          folder: 'blog-images',
+          transformation: [
+            { width: 800, height: 600, crop: 'fill' },
+            { quality: 'auto' }
+          ]
+        });
+        imageUrl = result.secure_url;
+      } catch (uploadError) {
+        console.error('Image upload error:', uploadError);
+        return res.status(400).json({ error: 'Failed to upload image' });
+      }
+    }
+
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        content,
+        category,
+        imageUrl,
+        excerpt: content.replace(/<[^>]*>/g, '').substring(0, 150) + '...',
+        updatedAt: Date.now()
+      },
+      { new: true }
+    ).populate('author', 'name');
+
+    res.json(updatedBlog);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// get blog download by id
+router.get('/download/:id', async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
+    
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog post not found' });
+    }
+
+    // Create a downloadable file
+    const fileName = `${blog.title.replace(/\s+/g, '_')}.txt`;
+    const content = `Title: ${blog.title}\n\nSubtitle: ${blog.subtitle}\n\nContent:\n${blog.content}\n\nCategory: ${blog.category}\n\nAuthor: ${blog.author.name}`;
+    
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.setHeader('Content-Type', 'text/plain');
+    res.send(content);
+  } catch (error) {
+    res.status(500).json({ error: 'Error downloading blog post' });
+  }
+});
+
+
+// Get all blogs for admin with optional status filter
+router.get('/admin/all', auth, async (req, res) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    console.log('Fetching all blogs for admin with status:', status, 'page:', page, 'limit:', limit);
+    const skip = (page - 1) * limit;
+    
+    let query = {};
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+    
+    const blogs = await Blog.find(query)
+      .populate('author', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    const total = await Blog.countDocuments(query);
+    
+    res.json({
+      blogs,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch blogs' });
+  }
+});
+
 
 
 

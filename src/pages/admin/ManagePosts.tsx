@@ -4,7 +4,7 @@ import { Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL;
 interface Post {
-  id: string;
+  _id: string;
   title: string;
   category: string;
   status: 'draft' | 'published' | 'rejected';
@@ -13,6 +13,7 @@ interface Post {
 
 export default function ManagePosts() {
   const [posts, setPosts] = useState<Post[]>([]);
+  //console.log('adminToken:', localStorage.getItem('token'));
 
   useEffect(() => {
     // TODO: Implement actual posts fetch
@@ -20,7 +21,7 @@ export default function ManagePosts() {
       try {
         const response = await fetch(`${API_URL}/blogs/user/post`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
         });
         if (response.ok) {
@@ -41,14 +42,14 @@ export default function ManagePosts() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({ status: newStatus }),
       });
 
       if (response.ok) {
         setPosts(posts.map(post =>
-          post.id === postId ? { ...post, status: newStatus } : post
+          post._id === postId ? { ...post, status: newStatus } : post
         ));
       }
     } catch (error) {
@@ -63,12 +64,12 @@ export default function ManagePosts() {
       const response = await fetch(`${API_URL}/blogs/${postId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       });
 
       if (response.ok) {
-        setPosts(posts.filter(post => post.id !== postId));
+        setPosts(posts.filter(post => post._id !== postId));
       }
     } catch (error) {
       console.error('Failed to delete post:', error);
@@ -110,7 +111,8 @@ export default function ManagePosts() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {posts.map((post) => (
-              <tr key={post.id}>
+              
+              <tr key={post._id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{post.title}</div>
                 </td>
@@ -133,13 +135,13 @@ export default function ManagePosts() {
                     {post.status === 'draft' && (
                       <>
                         <button
-                          onClick={() => handleStatusChange(post.id, 'published')}
+                          onClick={() => handleStatusChange(post._id, 'published')}
                           className="text-green-600 hover:text-green-900"
                         >
                           <CheckCircle className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => handleStatusChange(post.id, 'rejected')}
+                          onClick={() => handleStatusChange(post._id, 'rejected')}
                           className="text-red-600 hover:text-red-900"
                         >
                           <XCircle className="w-5 h-5" />
@@ -147,13 +149,13 @@ export default function ManagePosts() {
                       </>
                     )}
                     <Link
-                      to={`/admin/edit-post/${post.id}`}
+                      to={`/admin/edit-post/${post._id}`}
                       className="text-indigo-600 hover:text-indigo-900"
                     >
                       <Edit2 className="w-5 h-5" />
                     </Link>
                     <button
-                      onClick={() => handleDelete(post.id)}
+                      onClick={() => handleDelete(post._id)}
                       className="text-red-600 hover:text-red-900"
                     >
                       <Trash2 className="w-5 h-5" />

@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/constants.js';
 import User from '../model/User.js';
+import Blog from '../model/Blog.js';
 
 export const registerAdmin = async (req, res) => {
   try {
@@ -49,5 +50,25 @@ export const loginAdmin = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+};
+
+//get admin stats for dashboard
+export const stateAdmin = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments({ role: 'user' });
+    const totalBlogs = await Blog.countDocuments();
+    const pendingBlogs = await Blog.countDocuments({ status: 'pending' });
+    const publishedBlogs = await Blog.countDocuments({ status: 'published' });
+
+    res.json({
+      totalUsers,
+      publishedBlogs,
+      totalBlogs,
+      pendingBlogs
+    });
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    res.status(500).json({ error: 'Error fetching admin stats' });
   }
 };
