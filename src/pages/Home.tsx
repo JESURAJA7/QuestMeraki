@@ -3,6 +3,8 @@ import { Download, ArrowRight, Clock, User, TrendingUp, BookOpen, Star, Eye } fr
 import jsPDF from 'jspdf';
 import { Link } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface Blog {
   _id: string;
   title: string;
@@ -29,7 +31,7 @@ export default function Home() {
 
   const fetchBlogs = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/blogs');
+      const response = await fetch(`${API_URL}/blogs`);
       if (response.ok) {
         const data = await response.json();
         setBlogs(data);

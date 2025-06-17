@@ -56,7 +56,7 @@ export default function BlogDetail() {
  
   if (error) return <p className="text-red-500">{error}</p>;
   if (!post) return <p>Loading...</p>;
-console.log('Raw content:', JSON.stringify(post.content));
+//console.log('Raw content:', JSON.stringify(post.content));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">

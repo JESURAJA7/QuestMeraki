@@ -43,12 +43,12 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       const [statsResponse, activityResponse] = await Promise.all([
-        fetch('http://localhost:5000/api/admin/stats', {
+        fetch(`${API_URL}/admin/stats`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
         }),
-        fetch('http://localhost:5000/api/admin/recent-activity', {
+        fetch(`${API_URL}/admin/recent-activity`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
