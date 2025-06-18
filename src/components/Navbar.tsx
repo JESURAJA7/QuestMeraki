@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, Search, X, User as UserIcon, Sparkles, Crown, Plus, Settings, LogOut, Home, FileText, Info, Mail } from 'lucide-react';
 import SearchBar from './SearchBar';
 import { useAuth } from '../hooks/useAuth';
+import logoimg from '../assets/images/image.png';
 
 
 const Navbar: React.FC = () => {
@@ -53,22 +54,17 @@ const Navbar: React.FC = () => {
         <div className="container mx-auto px-4 lg:px-6">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link to="/" className="group flex items-center space-x-3 relative">
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse"></div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-pink-600 group-hover:to-indigo-600 transition-all duration-500">
-                  QuestMeraki
-                </span>
-                <span className="text-xs text-gray-500 -mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  Discover & Create
-                </span>
-              </div>
-            </Link>
+             {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+           <img src={logoimg} alt="Logo" className="h-18 w-12 " />
+              <div className="flex items-center space-x-2">
+            
+            <span className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent animate-pulse">
+              QuestMeraki
+            </span>
+          </div>
+          </Link>
+
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center space-x-1">
