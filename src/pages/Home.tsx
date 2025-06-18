@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, ArrowRight, Clock, User, TrendingUp, BookOpen, Star, Eye } from 'lucide-react';
+import { Download, ArrowRight, Clock, User, TrendingUp, BookOpen, Star, Eye, ChevronLeft, ChevronRight, Heart, Bookmark, Share2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { Link } from 'react-router-dom';
 
@@ -24,6 +24,12 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [flipDirection, setFlipDirection] = useState<'next' | 'prev'>('next');
+  
+  const blogsPerPage = 6;
+  const totalPages = Math.ceil(blogs.length / blogsPerPage);
 
   useEffect(() => {
     fetchBlogs();
@@ -127,6 +133,25 @@ export default function Home() {
     }
   };
 
+  const handlePageChange = (newPage: number, direction: 'next' | 'prev') => {
+    if (newPage < 1 || newPage > totalPages || isFlipping) return;
+    
+    setIsFlipping(true);
+    setFlipDirection(direction);
+    
+    setTimeout(() => {
+      setCurrentPage(newPage);
+      setTimeout(() => {
+        setIsFlipping(false);
+      }, 300);
+    }, 300);
+  };
+
+  const getCurrentPageBlogs = () => {
+    const startIndex = (currentPage - 1) * blogsPerPage;
+    return blogs.slice(startIndex, startIndex + blogsPerPage);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -161,8 +186,7 @@ export default function Home() {
   }
 
   const featuredPost = blogs[0];
-  const recentPosts = blogs.slice(1, 7);
-  const popularPosts = blogs.slice(3, 8); // Different set for popular posts
+  const popularPosts = blogs.slice(3, 8);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
@@ -170,22 +194,18 @@ export default function Home() {
       <section className="relative py-24 overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
-          {/* Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-pink-500/5 to-blue-600/10 animate-pulse"></div>
           
-          {/* Floating Circles */}
           <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-20 animate-bounce" style={{animationDelay: '0s', animationDuration: '3s'}}></div>
           <div className="absolute top-40 right-16 w-24 h-24 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-bounce" style={{animationDelay: '1s', animationDuration: '4s'}}></div>
           <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-gradient-to-r from-pink-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{animationDelay: '2s', animationDuration: '5s'}}></div>
           <div className="absolute top-32 right-1/3 w-20 h-20 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{animationDelay: '0.5s', animationDuration: '3.5s'}}></div>
           
-          {/* Moving Gradient Waves */}
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-600/10 to-transparent rounded-full animate-spin" style={{animationDuration: '20s'}}></div>
             <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-gradient-to-l from-blue-600/10 to-transparent rounded-full animate-spin" style={{animationDuration: '25s', animationDirection: 'reverse'}}></div>
           </div>
 
-          {/* Animated Particles */}
           <div className="absolute inset-0">
             {[...Array(6)].map((_, i) => (
               <div
@@ -204,7 +224,6 @@ export default function Home() {
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            {/* Animated Title */}
             <div className="mb-6 overflow-hidden">
               <h1 className="text-5xl md:text-7xl font-bold animate-fade-in-up">
                 <span className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 bg-clip-text text-transparent animate-gradient-x">
@@ -216,29 +235,21 @@ export default function Home() {
               </h1>
             </div>
             
-            {/* Animated Subtitle */}
             <div className="mb-8 overflow-hidden">
               <p className="text-xl md:text-2xl text-gray-600 leading-relaxed animate-fade-in-up" style={{animationDelay: '0.4s'}}>
                 Where curiosity meets creativity. Discover stories, insights, and ideas that inspire your journey of continuous learning and growth.
               </p>
             </div>
             
-            {/* Animated Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{animationDelay: '0.6s'}}>
-              {/* <button className="group bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 hover:scale-105 relative overflow-hidden">
-                <span className="relative z-10">Start Reading</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="absolute inset-0 bg-white/20 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-              </button> */}
               <button className="group border-2 border-purple-600 text-purple-600 px-8 py-4 rounded-xl font-semibold hover:bg-purple-600 hover:text-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1 relative overflow-hidden">
                 <Link to="/about" className="relative z-10">
-                <span className="relative z-10">About us</span>
+                  <span className="relative z-10">About us</span>
                 </Link>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
               </button>
             </div>
 
-            {/* Animated Stats */}
             <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up" style={{animationDelay: '0.8s'}}>
               <div className="text-center group">
                 <div className="text-3xl font-bold text-purple-600 group-hover:scale-110 transition-transform duration-300">
@@ -248,7 +259,7 @@ export default function Home() {
               </div>
               <div className="text-center group">
                 <div className="text-3xl font-bold text-blue-600 group-hover:scale-110 transition-transform duration-300">
-                  10K+
+                  10k+
                 </div>
                 <div className="text-gray-600 mt-1">Happy Readers</div>
               </div>
@@ -270,25 +281,31 @@ export default function Home() {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-gray-900 flex items-center">
                 <TrendingUp className="w-8 h-8 text-purple-600 mr-3" />
-                New Story
+                New Story...
               </h2>
             </div>
             
-            <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden group hover:shadow-2xl transition-all duration-500">
+            <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden group hover:shadow-3xl transition-all duration-700 border border-gray-100">
               <div className="md:flex">
                 <div className="md:w-1/2 relative overflow-hidden">
                   <img 
                     src={featuredPost.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=800'} 
                     alt={featuredPost.title}
-                    className="w-full h-64 md:h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="w-full h-64 md:h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold animate-pulse">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                  <div className="absolute top-6 left-6">
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg animate-pulse">
                       {featuredPost.category}
                     </span>
                   </div>
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-6 right-6 flex space-x-2">
+                    <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white hover:shadow-lg transition-all duration-300 hover:scale-110 group">
+                      <Heart className="w-5 h-5 text-gray-700 group-hover:text-red-500 transition-colors" />
+                    </button>
+                    <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white hover:shadow-lg transition-all duration-300 hover:scale-110 group">
+                      <Bookmark className="w-5 h-5 text-gray-700 group-hover:text-blue-500 transition-colors" />
+                    </button>
                     <button
                       onClick={() => downloadBlogAsPDF(featuredPost)}
                       disabled={downloadingId === featuredPost._id}
@@ -305,13 +322,13 @@ export default function Home() {
                 </div>
                 
                 <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                  <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
-                    <span className="flex items-center">
-                      <User className="w-4 h-4 mr-1" />
+                  <div className="flex items-center text-sm text-gray-500 mb-6 space-x-6">
+                    <span className="flex items-center bg-gray-100 px-3 py-1 rounded-full">
+                      <User className="w-4 h-4 mr-2" />
                       {featuredPost.author.name}
                     </span>
-                    <span className="flex items-center">
-                      <Clock className="w-4 h-4 mr-1" />
+                    <span className="flex items-center bg-gray-100 px-3 py-1 rounded-full">
+                      <Clock className="w-4 h-4 mr-2" />
                       {new Date(featuredPost.createdAt).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -320,20 +337,21 @@ export default function Home() {
                     </span>
                   </div>
                   
-                  <h3 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">
+                  <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
                     {featuredPost.title}
                   </h3>
                   
-                  <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                  <p className="text-gray-600 text-lg leading-relaxed mb-8">
                     {featuredPost.excerpt}
                   </p>
                   
-                  <button className="inline-flex items-center text-purple-600 font-semibold hover:text-purple-700 transition-colors group">
-                    <Link to={`/blogs/${featuredPost._id}`}>
-                      Read Full Story
-                      <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </button>
+                  <Link 
+                    to={`/blogs/${featuredPost._id}`}
+                    className="inline-flex items-center bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 group"
+                  >
+                    Read Full Story
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -341,28 +359,80 @@ export default function Home() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Posts */}
+          {/* Latest Stories with Pagination */}
           <div className="lg:col-span-2">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">Latest Stories</h2>
-            <div className="space-y-8 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-8">
-              {recentPosts.map((post) => (
-                <Link to={`/blogs/${post._id}`} className="lg:col-span-3" key={post._id}>
-                  <article className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group">
-                    <div className="md:flex">
-                      <div className="md:w-1/3 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 flex items-center">
+                <BookOpen className="w-8 h-8 text-purple-600 mr-3" />
+                Latest Stories
+              </h2>
+              <div className="text-sm text-gray-500">
+                Page {currentPage} of {totalPages}
+              </div>
+            </div>
+
+            {/* Stories Grid with Flip Animation */}
+            <div className="relative">
+              <div 
+                className={`grid grid-cols-1 md:grid-cols-2 gap-8 transition-all duration-600 ${
+                  isFlipping 
+                    ? `transform ${flipDirection === 'next' ? 'rotateY-180' : '-rotateY-180'} opacity-0` 
+                    : 'transform rotateY-0 opacity-100'
+                }`}
+                style={{
+                  transformStyle: 'preserve-3d',
+                  perspective: '1000px'
+                }}
+              >
+                {getCurrentPageBlogs().map((post, index) => (
+                  <Link to={`/blogs/${post._id}`} key={post._id}>
+                    <article 
+                      className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 group border border-gray-100 hover:border-purple-200 transform hover:-translate-y-2"
+                      style={{
+                        animationDelay: `${index * 100}ms`
+                      }}
+                    >
+                      <div className="relative overflow-hidden">
                         <img 
-                          src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=400'} 
+                          src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=600'} 
                           alt={post.title}
-                          className="w-full h-48 md:h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
                         />
-                        <div className="absolute top-3 left-3">
-                          <span className="bg-white/90 backdrop-blur-sm text-purple-600 px-3 py-1 rounded-full text-xs font-semibold">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        
+                        {/* Category Badge */}
+                        <div className="absolute top-4 left-4">
+                          <span className="bg-white/95 backdrop-blur-sm text-purple-600 px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
                             {post.category}
                           </span>
                         </div>
-                        <div className="absolute top-3 right-3">
+                        
+                        {/* Action Buttons */}
+                        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 hover:scale-110 group/btn"
+                          >
+                            <Heart className="w-4 h-4 text-gray-700 group-hover/btn:text-red-500 transition-colors" />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 hover:scale-110 group/btn"
+                          >
+                            <Share2 className="w-4 h-4 text-gray-700 group-hover/btn:text-blue-500 transition-colors" />
+                          </button>
                           <button
-                            onClick={() => downloadBlogAsPDF(post)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              downloadBlogAsPDF(post);
+                            }}
                             disabled={downloadingId === post._id}
                             className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 disabled:opacity-50 hover:scale-110"
                             title="Download as PDF"
@@ -376,40 +446,94 @@ export default function Home() {
                         </div>
                       </div>
                       
-                      <div className="md:w-2/3 p-6">
-                        <div className="flex items-center text-sm text-gray-500 mb-3 space-x-4">
-                          <span className="flex items-center">
-                            <User className="w-4 h-4 mr-1" />
+                      <div className="p-6">
+                        <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
+                          <span className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
+                            <User className="w-3 h-3 mr-1" />
                             {post.author.name}
                           </span>
                           <span className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1" />
+                            <Clock className="w-3 h-3 mr-1" />
                             {new Date(post.createdAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
+                              month: 'short',
                               day: 'numeric'
                             })}
                           </span>
                         </div>
                         
-                        <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+                        <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors leading-tight line-clamp-2">
                           {post.title}
                         </h3>
                         
-                        <p className="text-gray-600 mb-4 leading-relaxed">
+                        <p className="text-gray-600 mb-4 leading-relaxed line-clamp-3">
                           {post.excerpt}
                         </p>
                         
-                        <button className="inline-flex items-center text-purple-600 font-medium hover:text-purple-700 transition-colors group">
-                          Read More
-                          <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        <div className="flex items-center justify-between">
+                          <span className="inline-flex items-center text-purple-600 font-medium group-hover:text-purple-700 transition-colors">
+                            Read More
+                            <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                          </span>
+                          <div className="flex items-center space-x-3 text-sm text-gray-400">
+                            <span className="flex items-center">
+                              <Eye className="w-4 h-4 mr-1" />
+                              {Math.floor(Math.random() * 1000) + 100}
+                            </span>
+                            <span className="flex items-center">
+                              <Heart className="w-4 h-4 mr-1" />
+                              {Math.floor(Math.random() * 50) + 5}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                </Link>
-              ))}
+                    </article>
+                  </Link>
+                ))}
+              </div>
             </div>
+
+            {/* Pagination with Flip Animation */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center mt-12 space-x-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1, 'prev')}
+                  disabled={currentPage === 1 || isFlipping}
+                  className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+                  Previous
+                </button>
+                
+                <div className="flex space-x-1">
+                  {[...Array(totalPages)].map((_, index) => {
+                    const pageNumber = index + 1;
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => handlePageChange(pageNumber, pageNumber > currentPage ? 'next' : 'prev')}
+                        disabled={isFlipping}
+                        className={`w-10 h-10 rounded-lg font-medium transition-all duration-300 ${
+                          currentPage === pageNumber
+                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-md'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1, 'next')}
+                  disabled={currentPage === totalPages || isFlipping}
+                  className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -417,76 +541,79 @@ export default function Home() {
             <div className="sticky top-24 space-y-8">
               {/* Popular Posts */}
               {popularPosts.length > 0 && (
-                <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+                <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 border border-gray-100">
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
                     <Star className="w-5 h-5 text-purple-600 mr-2" />
                     Popular Posts
                   </h3>
                   <div className="space-y-4">
                     {popularPosts.map((post, index) => (
-                      <div key={post._id} className="flex items-start space-x-3 group cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors duration-200">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                          <img 
-                            src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=100'} 
-                            alt={post.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2 mb-1">
-                            {post.title}
-                          </h4>
-                          <div className="flex items-center text-xs text-gray-500 space-x-2">
-                            <span className="flex items-center">
-                              <Eye className="w-3 h-3 mr-1" />
-                              {Math.floor(Math.random() * 1000) + 100}
-                            </span>
-                            <span>•</span>
-                            <span>
-                              {new Date(post.createdAt).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric'
-                              })}
-                            </span>
+                      <Link to={`/blogs/${post._id}`} key={post._id}>
+                        <div className="flex items-start space-x-3 group cursor-pointer hover:bg-gray-50 rounded-xl p-3 transition-all duration-200 hover:shadow-md">
+                          <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
+                            <img 
+                              src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=100'} 
+                              alt={post.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2 mb-2">
+                              {post.title}
+                            </h4>
+                            <div className="flex items-center text-xs text-gray-500 space-x-3">
+                              <span className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
+                                <Eye className="w-3 h-3 mr-1" />
+                                {Math.floor(Math.random() * 1000) + 100}
+                              </span>
+                              <span>
+                                {new Date(post.createdAt).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
               )}
 
               {/* Trending Posts */}
-              <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 border border-gray-100">
                 <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
                   <TrendingUp className="w-5 h-5 text-purple-600 mr-2" />
                   Trending Now
                 </h3>
                 <div className="space-y-4">
                   {blogs.slice(0, 4).map((post, index) => (
-                    <div key={post._id} className="flex items-start space-x-3 group cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors duration-200">
-                      <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
-                        {index + 1}
+                    <Link to={`/blogs/${post._id}`} key={post._id}>
+                      <div className="flex items-start space-x-3 group cursor-pointer hover:bg-gray-50 rounded-xl p-3 transition-all duration-200 hover:shadow-md">
+                        <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200 shadow-lg">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2 mb-1">
+                            {post.title}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            {new Date(post.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2 mb-1">
-                          {post.title}
-                        </h4>
-                        <p className="text-xs text-gray-500">
-                          {new Date(post.createdAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
 
               {/* Newsletter */}
-              <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-shadow duration-300 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-blue-700 opacity-0 hover:opacity-50 transition-opacity duration-300"></div>
+              <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-shadow duration-300 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-blue-600 to-purple-800 opacity-0 hover:opacity-50 transition-opacity duration-300"></div>
                 <div className="relative z-10">
                   <h3 className="text-xl font-bold mb-3">Stay Updated</h3>
                   <p className="text-purple-100 mb-4 text-sm">
@@ -496,13 +623,17 @@ export default function Home() {
                     <input
                       type="email"
                       placeholder="Enter your email"
-                      className="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200"
+                      className="w-full px-4 py-3 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 shadow-inner"
                     />
-                    <button className="w-full bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors transform hover:scale-105 duration-200">
+                    <button className="w-full bg-white text-purple-600 px-4 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 shadow-lg">
                       Subscribe
                     </button>
                   </div>
                 </div>
+                
+                {/* Decorative Elements */}
+                <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white/5 rounded-full"></div>
               </div>
             </div>
           </div>
@@ -511,8 +642,8 @@ export default function Home() {
         {/* Empty State */}
         {blogs.length === 0 && !loading && (
           <div className="text-center py-20">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-              <BookOpen className="w-12 h-12 text-gray-400" />
+            <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <BookOpen className="w-12 h-12 text-purple-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">No Stories Yet</h3>
             <p className="text-gray-600 max-w-md mx-auto">

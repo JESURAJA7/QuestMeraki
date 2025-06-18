@@ -280,7 +280,7 @@ export default function AdminDashboard() {
               <ActionCard
                 to="/admin/user-blogs"
                 icon={Users}
-                title="Review Submissions"
+                title="Manage Users Blogs"
                 description="Review and moderate user-generated content"
                 color="bg-blue-500"
                 badge={stats.pendingBlogs > 0 ? `${stats.pendingBlogs} pending` : undefined}

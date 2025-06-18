@@ -64,12 +64,20 @@ export default function Navbar() {
                         {user?.name}
                       </div>
                       {user?.role === 'admin' && (
-                        <Link
-                          to="/admin"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          Admin Dashboard
-                        </Link>
+                        <>
+                          <Link
+                            to="/admin"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Admin Dashboard
+                          </Link>
+                          {/* <Link
+                            to="/admin/create-posts"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            create Posts
+                          </Link> */}
+                        </>
                       )}
                       <Link
                         to="/create-blog"

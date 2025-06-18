@@ -16,6 +16,8 @@ interface UserBlog {
   imageUrl: string;
 }
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function UserBlogs() {
   const [blogs, setBlogs] = useState<UserBlog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +32,8 @@ export default function UserBlogs() {
   try {
     setLoading(true);
     const endpoint = filter === 'pending' 
-      ? 'http://localhost:5000/api/blogs/pending'
-      : `http://localhost:5000/api/blogs/admin/all?status=${filter === 'all' ? '' : filter}`;
+      ? `${API_URL}/blogs/pending`
+      : `${API_URL}/blogs/admin/all?status=${filter === 'all' ? '' : filter}`;
     
     const response = await fetch(endpoint, {
       headers: {
@@ -56,7 +58,7 @@ export default function UserBlogs() {
 
   const handleStatusChange = async (blogId: string, newStatus: 'published' | 'rejected') => {
     try {
-      const response = await fetch(`http://localhost:5000/api/blogs/${blogId}/status`, {
+      const response = await fetch(`${API_URL}/blogs/${blogId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -80,7 +82,7 @@ export default function UserBlogs() {
 
   const downloadBlogData = async (blog: UserBlog) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/blogs/${blog._id}/download`, {
+      const response = await fetch(`${API_URL}/blogs/${blog._id}/download`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
