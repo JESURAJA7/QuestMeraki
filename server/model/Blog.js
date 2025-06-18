@@ -8,8 +8,10 @@ const blogSchema = new mongoose.Schema({
   },
   subtitle: {
     type: String,
-    required: true,
-    trim: true
+    required: false,
+    trim: true,
+    maxlength: 100,
+    default: ''
   },
   content: {
     type: String,
