@@ -27,7 +27,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isFlipping, setIsFlipping] = useState(false);
   const [flipDirection, setFlipDirection] = useState<'next' | 'prev'>('next');
-  
+
   const blogsPerPage = 6;
   const totalPages = Math.ceil(blogs.length / blogsPerPage);
 
@@ -51,94 +51,189 @@ export default function Home() {
     }
   };
 
-  const downloadBlogAsPDF = async (blog: Blog) => {
-    setDownloadingId(blog._id);
-    try {
-      const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
-      const maxWidth = pageWidth - 2 * margin;
-      let yPosition = margin;
+const downloadBlogAsPDF = async (blog: Blog) => {
+  setDownloadingId(blog._id);
+  try {
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    let yPosition = margin;
 
-      const addText = (text: string, fontSize: number, isBold: boolean = false) => {
-        pdf.setFontSize(fontSize);
-        if (isBold) {
-          pdf.setFont('helvetica', 'bold');
-        } else {
-          pdf.setFont('helvetica', 'normal');
-        }
-        
-        const lines = pdf.splitTextToSize(text, maxWidth);
-        
-        if (yPosition + (lines.length * fontSize * 0.5) > pageHeight - margin) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-        
-        pdf.text(lines, margin, yPosition);
-        yPosition += lines.length * fontSize * 0.5 + 5;
-      };
+    // ===== COVER PAGE =====
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(24);
+    pdf.setTextColor(30, 30, 100);
+    pdf.text(blog.title, pageWidth / 2, pageHeight / 3, { align: 'center' });
 
-      addText(blog.title, 20, true);
-      yPosition += 10;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(14);
+    pdf.setTextColor(80, 80, 80);
+    pdf.text(`By ${blog.author.name}`, pageWidth / 2, pageHeight / 3 + 20, { align: 'center' });
 
-      addText(`Author: ${blog.author.name}`, 12);
-      addText(`Category: ${blog.category}`, 12);
-      addText(`Published: ${new Date(blog.createdAt).toLocaleDateString('en-US', {
+    pdf.text(
+      new Date(blog.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
-      })}`, 12);
-      yPosition += 15;
+        day: 'numeric',
+      }),
+      pageWidth / 2,
+      pageHeight / 3 + 35,
+      { align: 'center' }
+    );
 
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 15;
+    pdf.addPage();
+    yPosition = margin;
 
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = blog.content;
-      const textContent = tempDiv.textContent || tempDiv.innerText || '';
-      
-      const paragraphs = textContent.split('\n').filter(p => p.trim().length > 0);
-      
-      paragraphs.forEach(paragraph => {
-        if (paragraph.trim()) {
-          addText(paragraph.trim(), 11);
-          yPosition += 5;
-        }
-      });
+    // ===== HEADER =====
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(0, 0, pageWidth, 40, 'F');
 
-      const totalPages = pdf.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(
-          `Downloaded from QuestMeraki - Page ${i} of ${totalPages}`,
-          pageWidth / 2,
-          pageHeight - 10,
-          { align: 'center' }
-        );
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(16);
+    pdf.setTextColor(50, 50, 150);
+    pdf.text('QuestMeraki', margin, 25);
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('Premium Blog Content', pageWidth - margin, 25, { align: 'right' });
+
+    yPosition = 50;
+
+    // ===== TITLE BLOCK =====
+    pdf.setFillColor(30, 30, 100);
+    pdf.rect(margin, yPosition - 10, pageWidth - 2 * margin, 20, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(blog.title, pageWidth / 2, yPosition + 3, { align: 'center' });
+
+    yPosition += 25;
+
+    // ===== METADATA =====
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(12);
+    pdf.setTextColor(80, 80, 80);
+
+    const authorText = `👤 ${blog.author.name}`;
+    const categoryText = `🏷️ ${blog.category}`;
+    const dateText = `📅 ${new Date(blog.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })}`;
+
+    const metadataSpacing = (pageWidth - 2 * margin) / 3;
+
+    pdf.text(authorText, margin, yPosition);
+    pdf.text(categoryText, margin + metadataSpacing, yPosition);
+    pdf.text(dateText, margin + metadataSpacing * 2, yPosition);
+
+    yPosition += 20;
+
+    // ===== DIVIDER =====
+    pdf.setDrawColor(200, 200, 200);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+    yPosition += 20;
+
+    // ===== TEXT HELPER =====
+    const addText = (
+      text: string,
+      fontSize: number,
+      isBold = false,
+      color: [number, number, number] = [0, 0, 0],
+      lineHeight = 1.5
+    ) => {
+      if (!text.trim()) return;
+
+      pdf.setFontSize(fontSize);
+      pdf.setTextColor(...color);
+      pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
+
+      const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
+      const lineHeightPx = fontSize * lineHeight;
+      const spaceNeeded = lines.length * lineHeightPx;
+
+      if (yPosition + spaceNeeded > pageHeight - margin) {
+        pdf.addPage();
+        yPosition = margin;
       }
 
-      const fileName = `${blog.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
-      pdf.save(fileName);
-      
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      setError('Failed to generate PDF. Please try again.');
-    } finally {
-      setDownloadingId(null);
+      pdf.text(lines, margin, yPosition);
+      yPosition += spaceNeeded + fontSize * 0.5; // Dynamic spacing
+    };
+
+    // ===== CLEAN HTML & PARSE PARAGRAPHS =====
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = blog.content;
+
+    const unwantedElements = tempDiv.querySelectorAll('script, style, iframe');
+    unwantedElements.forEach(el => el.remove());
+
+    const rawParagraphs: string[] = [];
+    tempDiv.querySelectorAll('p, div').forEach(node => {
+      const text = node.textContent?.trim();
+      if (text && !/^[\s\u00A0]*$/.test(text)) {
+        rawParagraphs.push(text);
+      }
+    });
+
+    const paragraphs = rawParagraphs.length
+      ? rawParagraphs
+      : (tempDiv.textContent || '')
+          .split(/\r?\n+/)
+          .map(p => p.trim())
+          .filter(p => p.length > 0);
+
+    // ===== RENDER PARAGRAPHS =====
+    for (const para of paragraphs) {
+      const isQuote = para.startsWith('"') || para.startsWith('“');
+      const style: { fontSize: number; isBold: boolean; color: [number, number, number] } = isQuote
+        ? { fontSize: 11, isBold: true, color: [100, 50, 150] }
+        : { fontSize: 11, isBold: false, color: [60, 60, 60] };
+      addText(para, style.fontSize, style.isBold, style.color);
     }
-  };
+
+    // ===== FOOTER ON ALL PAGES =====
+    const totalPages = pdf.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      pdf.setPage(i);
+      pdf.setDrawColor(220, 220, 220);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`QuestMeraki`, margin, pageHeight - 8);
+      pdf.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+    }
+
+    // ===== SAVE FILE =====
+    const fileName = `${blog.title
+      .replace(/[^a-z0-9]/gi, '_')
+      .replace(/_+/g, '_')
+      .toLowerCase()}.pdf`;
+
+    pdf.save(fileName);
+
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    setError('Failed to generate PDF. Please try again.');
+  } finally {
+    setDownloadingId(null);
+  }
+};
+
+
 
   const handlePageChange = (newPage: number, direction: 'next' | 'prev') => {
     if (newPage < 1 || newPage > totalPages || isFlipping) return;
-    
+
     setIsFlipping(true);
     setFlipDirection(direction);
-    
+
     setTimeout(() => {
       setCurrentPage(newPage);
       setTimeout(() => {
@@ -186,6 +281,7 @@ export default function Home() {
   }
 
   const featuredPost = blogs[0];
+  //const latestPosts = blogs.slice(1)
   const popularPosts = blogs.slice(3, 8);
 
   return (
@@ -195,15 +291,15 @@ export default function Home() {
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-pink-500/5 to-blue-600/10 animate-pulse"></div>
-          
-          <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-20 animate-bounce" style={{animationDelay: '0s', animationDuration: '3s'}}></div>
-          <div className="absolute top-40 right-16 w-24 h-24 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-bounce" style={{animationDelay: '1s', animationDuration: '4s'}}></div>
-          <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-gradient-to-r from-pink-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{animationDelay: '2s', animationDuration: '5s'}}></div>
-          <div className="absolute top-32 right-1/3 w-20 h-20 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{animationDelay: '0.5s', animationDuration: '3.5s'}}></div>
-          
+
+          <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
+          <div className="absolute top-40 right-16 w-24 h-24 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-gradient-to-r from-pink-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '2s', animationDuration: '5s' }}></div>
+          <div className="absolute top-32 right-1/3 w-20 h-20 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '3.5s' }}></div>
+
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-600/10 to-transparent rounded-full animate-spin" style={{animationDuration: '20s'}}></div>
-            <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-gradient-to-l from-blue-600/10 to-transparent rounded-full animate-spin" style={{animationDuration: '25s', animationDirection: 'reverse'}}></div>
+            <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-600/10 to-transparent rounded-full animate-spin" style={{ animationDuration: '20s' }}></div>
+            <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-gradient-to-l from-blue-600/10 to-transparent rounded-full animate-spin" style={{ animationDuration: '25s', animationDirection: 'reverse' }}></div>
           </div>
 
           <div className="absolute inset-0">
@@ -221,7 +317,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-        
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <div className="mb-6 overflow-hidden">
@@ -229,19 +325,19 @@ export default function Home() {
                 <span className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 bg-clip-text text-transparent animate-gradient-x">
                   Quest
                 </span>
-                <span className="text-gray-900 ml-2 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                <span className="text-gray-900 ml-2 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                   Meraki
                 </span>
               </h1>
             </div>
-            
+
             <div className="mb-8 overflow-hidden">
-              <p className="text-xl md:text-2xl text-gray-600 leading-relaxed animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+              <p className="text-xl md:text-2xl text-gray-600 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                 Where curiosity meets creativity. Discover stories, insights, and ideas that inspire your journey of continuous learning and growth.
               </p>
             </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{animationDelay: '0.6s'}}>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
               <button className="group border-2 border-purple-600 text-purple-600 px-8 py-4 rounded-xl font-semibold hover:bg-purple-600 hover:text-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1 relative overflow-hidden">
                 <Link to="/about" className="relative z-10">
                   <span className="relative z-10">About us</span>
@@ -250,7 +346,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up" style={{animationDelay: '0.8s'}}>
+            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
               <div className="text-center group">
                 <div className="text-3xl font-bold text-purple-600 group-hover:scale-110 transition-transform duration-300">
                   {blogs.length}+
@@ -284,12 +380,12 @@ export default function Home() {
                 New Story...
               </h2>
             </div>
-            
+
             <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden group hover:shadow-3xl transition-all duration-700 border border-gray-100">
               <div className="md:flex">
                 <div className="md:w-1/2 relative overflow-hidden">
-                  <img 
-                    src={featuredPost.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=800'} 
+                  <img
+                    src={featuredPost.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=800'}
                     alt={featuredPost.title}
                     className="w-full h-64 md:h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                   />
@@ -320,7 +416,7 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
                   <div className="flex items-center text-sm text-gray-500 mb-6 space-x-6">
                     <span className="flex items-center bg-gray-100 px-3 py-1 rounded-full">
@@ -336,16 +432,16 @@ export default function Home() {
                       })}
                     </span>
                   </div>
-                  
+
                   <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
                     {featuredPost.title}
                   </h3>
-                  
+
                   <p className="text-gray-600 text-lg leading-relaxed mb-8">
                     {featuredPost.excerpt}
                   </p>
-                  
-                  <Link 
+
+                  <Link
                     to={`/blogs/${featuredPost._id}`}
                     className="inline-flex items-center bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 group"
                   >
@@ -373,12 +469,11 @@ export default function Home() {
 
             {/* Stories Grid with Flip Animation */}
             <div className="relative">
-              <div 
-                className={`grid grid-cols-1 md:grid-cols-2 gap-8 transition-all duration-600 ${
-                  isFlipping 
-                    ? `transform ${flipDirection === 'next' ? 'rotateY-180' : '-rotateY-180'} opacity-0` 
-                    : 'transform rotateY-0 opacity-100'
-                }`}
+              <div
+                className={`grid grid-cols-1 md:grid-cols-2 gap-8 transition-all duration-600 ${isFlipping
+                  ? `transform ${flipDirection === 'next' ? 'rotateY-180' : '-rotateY-180'} opacity-0`
+                  : 'transform rotateY-0 opacity-100'
+                  }`}
                 style={{
                   transformStyle: 'preserve-3d',
                   perspective: '1000px'
@@ -386,30 +481,30 @@ export default function Home() {
               >
                 {getCurrentPageBlogs().map((post, index) => (
                   <Link to={`/blogs/${post._id}`} key={post._id}>
-                    <article 
+                    <article
                       className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 group border border-gray-100 hover:border-purple-200 transform hover:-translate-y-2"
                       style={{
                         animationDelay: `${index * 100}ms`
                       }}
                     >
                       <div className="relative overflow-hidden">
-                        <img 
-                          src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=600'} 
+                        <img
+                          src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=600'}
                           alt={post.title}
                           className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        
+
                         {/* Category Badge */}
                         <div className="absolute top-4 left-4">
                           <span className="bg-white/95 backdrop-blur-sm text-purple-600 px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
                             {post.category}
                           </span>
                         </div>
-                        
+
                         {/* Action Buttons */}
                         <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -418,7 +513,7 @@ export default function Home() {
                           >
                             <Heart className="w-4 h-4 text-gray-700 group-hover/btn:text-red-500 transition-colors" />
                           </button>
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -445,7 +540,7 @@ export default function Home() {
                           </button>
                         </div>
                       </div>
-                      
+
                       <div className="p-6">
                         <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
                           <span className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
@@ -460,15 +555,15 @@ export default function Home() {
                             })}
                           </span>
                         </div>
-                        
+
                         <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors leading-tight line-clamp-2">
                           {post.title}
                         </h3>
-                        
+
                         <p className="text-gray-600 mb-4 leading-relaxed line-clamp-3">
                           {post.excerpt}
                         </p>
-                        
+
                         <div className="flex items-center justify-between">
                           <span className="inline-flex items-center text-purple-600 font-medium group-hover:text-purple-700 transition-colors">
                             Read More
@@ -503,7 +598,7 @@ export default function Home() {
                   <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
                   Previous
                 </button>
-                
+
                 <div className="flex space-x-1">
                   {[...Array(totalPages)].map((_, index) => {
                     const pageNumber = index + 1;
@@ -512,18 +607,17 @@ export default function Home() {
                         key={pageNumber}
                         onClick={() => handlePageChange(pageNumber, pageNumber > currentPage ? 'next' : 'prev')}
                         disabled={isFlipping}
-                        className={`w-10 h-10 rounded-lg font-medium transition-all duration-300 ${
-                          currentPage === pageNumber
-                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-md'
-                        }`}
+                        className={`w-10 h-10 rounded-lg font-medium transition-all duration-300 ${currentPage === pageNumber
+                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-md'
+                          }`}
                       >
                         {pageNumber}
                       </button>
                     );
                   })}
                 </div>
-                
+
                 <button
                   onClick={() => handlePageChange(currentPage + 1, 'next')}
                   disabled={currentPage === totalPages || isFlipping}
@@ -551,8 +645,8 @@ export default function Home() {
                       <Link to={`/blogs/${post._id}`} key={post._id}>
                         <div className="flex items-start space-x-3 group cursor-pointer hover:bg-gray-50 rounded-xl p-3 transition-all duration-200 hover:shadow-md">
                           <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
-                            <img 
-                              src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=100'} 
+                            <img
+                              src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=100'}
                               alt={post.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
@@ -630,7 +724,7 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Decorative Elements */}
                 <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white/5 rounded-full"></div>

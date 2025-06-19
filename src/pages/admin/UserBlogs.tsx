@@ -11,6 +11,7 @@ interface UserBlog {
     _id: string;
     name: string;
     email: string;
+    role: string;
   };
   excerpt: string;
   imageUrl: string;
@@ -20,6 +21,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export default function UserBlogs() {
   const [blogs, setBlogs] = useState<UserBlog[]>([]);
+  console.log(blogs.length);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'published' | 'rejected'>('pending');
@@ -28,13 +30,12 @@ export default function UserBlogs() {
     fetchUserBlogs();
   }, [filter]);
 
-  const fetchUserBlogs = async () => {
+const fetchUserBlogs = async () => {
   try {
     setLoading(true);
-    const endpoint = filter === 'pending' 
-      ? `${API_URL}/blogs/pending`
-      : `${API_URL}/blogs/admin/all?status=${filter === 'all' ? '' : filter}`;
-    
+
+    const endpoint = `${API_URL}/blogs/admin/all?status=${filter === 'all' ? '' : filter}`;
+
     const response = await fetch(endpoint, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -43,8 +44,12 @@ export default function UserBlogs() {
 
     if (response.ok) {
       const data = await response.json();
-      // ✅ Fix here
-      setBlogs(Array.isArray(data) ? data : data.blogs);
+      const blogs = Array.isArray(data) ? data : data.blogs;
+
+      // Filter only user blogs
+      const userBlogs = blogs.filter((blog: UserBlog) => blog.author?.role === 'user');
+
+      setBlogs(userBlogs);
     } else {
       setError('Failed to fetch user blogs');
     }
@@ -54,6 +59,8 @@ export default function UserBlogs() {
     setLoading(false);
   }
 };
+
+
 
 
   const handleStatusChange = async (blogId: string, newStatus: 'published' | 'rejected') => {
@@ -123,7 +130,7 @@ export default function UserBlogs() {
 
   const viewBlogDetails = (blog: UserBlog) => {
     // Open blog details in a modal or new window
-    window.open(`/post/${blog._id}`, '_blank');
+    window.open(`/blogs/${blog._id}`, '_blank');
   };
 
   const getStatusColor = (status: string) => {

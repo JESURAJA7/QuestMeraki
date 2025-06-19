@@ -21,7 +21,7 @@ export default function BlogPost() {
     `,
     author: 'John Doe',
     date: 'March 1, 2024',
-    imageUrl: 'https://images.pexels.com/photos/574071/pexels-photo-574071.jpeg',
+    imageUrl: '',
     category: 'Technology',
     tags: ['Web Development', 'Technology', 'Future Trends', 'AI']
   };

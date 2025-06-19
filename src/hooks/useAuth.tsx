@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 interface User {
+  avatar: string | undefined;
   id: string;
   email: string;
   role: 'user' | 'admin';
