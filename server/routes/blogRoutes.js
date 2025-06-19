@@ -1,5 +1,6 @@
 import express from 'express';
 import Blog from '../model/Blog.js';
+import User from '../model/User.js';
 import auth from '../middleware/auth.js';
 import upload from '../middleware/upload.js';
 import cloudinary from '../config/cloudinary.js';
@@ -134,7 +135,7 @@ router.delete('/:id', auth, async (req, res) => {
 // Get blog by ID
 
 
-router.get('/u/:id', auth, async (req, res) => {
+router.get('/u/:id',  async (req, res) => {
   try {
     console.log('Fetching blog with ID:', req.params.id);
     const blog = await Blog.findById(req.params.id).populate('author', 'name');
@@ -242,7 +243,7 @@ router.get('/admin/all', auth, async (req, res) => {
     }
     
     const blogs = await Blog.find(query)
-      .populate('author', 'name email')
+      .populate('author', 'name email role')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -262,7 +263,20 @@ router.get('/admin/all', auth, async (req, res) => {
   }
 });
 
-
+// get user role
+router.get('/user/:id/role', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('role');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ role: user.role });
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching user role' });
+  }
+});
 
 
 export default router;
