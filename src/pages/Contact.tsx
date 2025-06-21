@@ -77,34 +77,44 @@ export default function Contact() {
     <div className="min-h-screen bg-gray-50">
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl font-bold mb-6">
-              Get in <span className="text-yellow-300">Touch</span>
-            </h1>
-            <p className="text-xl mb-8 opacity-90 leading-relaxed">
-              Have questions, suggestions, or just want to say hello? We'd love to hear from you.
-              Our team is here to help you make the most of your QuestMeraki experience.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* <section className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white h-20 ">
+        <div className="absolute top-5 right-10 text-right max-w-xl">
+          <h1 className="text-5xl font-bold mb-6">
+            Get in <span className="text-yellow-300">Touch</span>
+          </h1> */}
+          {/* Optional Paragraph */}
+          {/* <p className="text-xl mb-8 opacity-90 leading-relaxed">
+            Have questions, suggestions, or just want to say hello? We'd love to hear from you.
+            Our team is here to help you make the most of your QuestMeraki experience.
+          </p> */}
+        {/* </div>
+      </section> */}
 
-      {/*add information */}
+
+
+      {/*Contact Us */}
+      <section className="py-6 px-10 bg-white">
+        
+          <div className="max-w-6xl mx-auto text-center mb-6">
+            <span className="text-3xl font-bold bg-gradient-to-r from-sky-400 to-violet-500 bg-clip-text text-transparent animate-pulse">
+              Contact Us
+            </span>
+          </div>
+        
+      </section>
 
 
       {/* Contact Info Cards */}
       <section className="py-16 -mt-10 relative z-10">
         <div className="prose prose-lg max-w-none">
-        <div className=" bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 md:p-12 shadow-lg mb-8 mx-auto max-w-5xl">
-          <p className="text-gray-700 mb-6 leading-relaxed text-justify font-semibold font-sans text-lg">
-            Welcome to QuestMeraki and it is a pleasure to have you visiting the blog.
-            QuestMeraki is a modest attempt to provide information on various topics, particularly on research, academic and general management. Feel free to use the content for academic or personal purpose. I would salute you, if you would acknowledge the source by citing the blog post.
-            If you think I could be of any help or you have a request for a specific questionnaire (related to management or social sciences), shoot a mail to – info@questmeraki.com and you will get a quick response. Alternatively please fill in the contact form.
-            Stay Blessed!
-          </p>
-        </div>
+          <div className=" bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 md:p-12 shadow-lg mb-8 mx-auto max-w-5xl">
+            <p className="text-gray-700 mb-6 leading-relaxed text-justify font-semibold font-sans text-lg">
+              Welcome to QuestMeraki and it is a pleasure to have you visiting the blog.
+              QuestMeraki is a modest attempt to provide information on various topics, particularly on research, academic and general management. Feel free to use the content for academic or personal purpose. I would salute you, if you would acknowledge the source by citing the blog post.
+              If you think I could be of any help or you have a request for a specific questionnaire (related to management or social sciences), shoot a mail to – info@questmeraki.com and you will get a quick response. Alternatively please fill in the contact form.
+              Stay Blessed!
+            </p>
+          </div>
         </div>
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">

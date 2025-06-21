@@ -162,3 +162,9 @@ html {
 .preserve-3d {
   transform-style: preserve-3d;
 }
+
+.custom-article-style p {
+  text-align: justify;
+  line-height: 2;
+   font-size: 1.150rem; /* Adjust as needed for spacing */
+}

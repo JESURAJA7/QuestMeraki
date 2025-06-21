@@ -285,7 +285,7 @@ const BlogDetail: React.FC = () => {
           <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
             <Link to="/" className="hover:text-indigo-600 transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to="/blogs" className="hover:text-indigo-600 transition-colors">Articles</Link>
+            <Link to="/blogs" className="hover:text-indigo-600 transition-colors">Blogs</Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-gray-900">{post.title}</span>
           </nav>
@@ -367,23 +367,24 @@ const BlogDetail: React.FC = () => {
             <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 md:p-12">
               <article className="mb-12">
                 <div
-                  className="prose prose-lg prose-indigo max-w-none
-                prose-headings:text-gray-900 prose-headings:font-bold
-                prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6
-                prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline
-                prose-strong:text-gray-900 prose-strong:font-semibold
-                prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-indigo-50 prose-blockquote:p-4 prose-blockquote:rounded-r-lg
-                prose-code:bg-gray-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm
-                prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:p-4
-                prose-ul:space-y-2 prose-ol:space-y-2
-                prose-li:text-gray-700"
+                  className="prose prose-lg prose-indigo max-w-none custom-article-style
+                    prose-headings:text-gray-900 prose-headings:font-bold
+                    prose-p:text-gray-700 prose-p:mb-6
+                    prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline
+                    prose-strong:text-gray-900 prose-strong:font-semibold
+                    prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-indigo-50 prose-blockquote:p-4 prose-blockquote:rounded-r-lg
+                    prose-code:bg-gray-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm
+                    prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:p-4
+                    prose-ul:space-y-2 prose-ol:space-y-2
+                    prose-li:text-gray-700"
                   dangerouslySetInnerHTML={{ __html: post.content }}
                 />
               </article>
             </div>
           </div>
+
           {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
+          {/* {post.tags && post.tags.length > 0 && (
             <div className="mb-12">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Tags</h3>
               <div className="flex flex-wrap gap-2">
@@ -398,7 +399,7 @@ const BlogDetail: React.FC = () => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Author Bio */}
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 mb-12">
