@@ -278,5 +278,92 @@ router.get('/user/:id/role', auth, async (req, res) => {
   }
 });
 
+router.post('/:id/view', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, timestamp, userAgent, referrer } = req.body;
+
+    // Find the blog
+    const blog = await Blog.findById(id);
+    if (!blog) {
+      return res.status(404).json({ message: 'Blog not found' });
+    }
+
+    // Increment view count
+    blog.views = (blog.views || 0) + 1;
+    await blog.save();
+
+    // Optional: Store detailed view analytics
+    // You can create a separate ViewAnalytics model for detailed tracking
+    
+    res.json({ 
+      success: true, 
+      views: blog.views,
+      message: 'View tracked successfully' 
+    });
+  } catch (error) {
+    console.error('Error tracking view:', error);
+    res.status(500).json({ message: 'Failed to track view' });
+  }
+});
+
+// Get blog view count
+router.get('/:id/views', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const blog = await Blog.findById(id).select('views');
+    
+    if (!blog) {
+      return res.status(404).json({ message: 'Blog not found' });
+    }
+
+    res.json({ viewCount: blog.views || 0 });
+  } catch (error) {
+    console.error('Error getting view count:', error);
+    res.status(500).json({ message: 'Failed to get view count' });
+  }
+});
+
+// Get trending blogs
+router.get('/trending', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    
+    // Get blogs sorted by views (descending) with growth rate calculation
+    const blogs = await Blog.find({ status: 'published' })
+      .populate('author', 'name email')
+      .sort({ views: -1, createdAt: -1 })
+      .limit(limit);
+
+    // Calculate growth rate (you can implement more sophisticated logic)
+    const trendingBlogs = blogs.map(blog => ({
+      ...blog.toObject(),
+      growthRate: Math.random() * 50 + 5 // Mock growth rate for now
+    }));
+
+    res.json(trendingBlogs);
+  } catch (error) {
+    console.error('Error getting trending blogs:', error);
+    res.status(500).json({ message: 'Failed to get trending blogs' });
+  }
+});
+
+// Get popular blogs
+router.get('/popular', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 5;
+    
+    const blogs = await Blog.find({ status: 'published' })
+      .populate('author', 'name email')
+      .sort({ views: -1 })
+      .limit(limit);
+
+    res.json(blogs);
+  } catch (error) {
+    console.error('Error getting popular blogs:', error);
+    res.status(500).json({ message: 'Failed to get popular blogs' });
+  }
+});
+
 
 export default router;

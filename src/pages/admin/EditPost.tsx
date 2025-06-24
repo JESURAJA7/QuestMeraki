@@ -7,6 +7,8 @@ import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface BlogPost {
   _id: string;
   title: string;
@@ -52,7 +54,7 @@ export default function EditPost() {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/blogs/u/${id}`, {
+        const response = await fetch(`${API_URL}/blogs/u/${id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
@@ -110,7 +112,7 @@ export default function EditPost() {
         formData.append('image', imageFile);
       }
 
-      const response = await fetch(`http://localhost:5000/api/blogs/${id}`, {
+      const response = await fetch(`${API_URL}/blogs/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -137,7 +139,7 @@ export default function EditPost() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/blogs/${id}`, {
+      const response = await fetch(`${API_URL}/blogs/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

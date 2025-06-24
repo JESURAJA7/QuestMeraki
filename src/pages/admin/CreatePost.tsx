@@ -1,22 +1,22 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Save, Upload, ArrowLeft, Type, Bold, Italic, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Underline as UnderlineIcon } from 'lucide-react';
+import { Save, Upload, ArrowLeft, Type, Bold, Italic, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Underline as UnderlineIcon, CheckCircle } from 'lucide-react';
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 
-const API_URL = import.meta.env.VITE_API_URL ;
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function CreatePost() {
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
-  //const [content, setContent] = useState('');
   const [category, setCategory] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [isPublished, setIsPublished] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [fontSize, setFontSize] = useState(16);
@@ -26,7 +26,7 @@ export default function CreatePost() {
 
   const editor = useEditor({
     extensions: [
-      StarterKit, // Underline extension is added separately below
+      StarterKit,
       Underline,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
@@ -83,9 +83,10 @@ export default function CreatePost() {
     try {
       const formData = new FormData();
       formData.append('title', title);
-      formData.append('subtitle', subtitle);
+      formData.append('excerpt', subtitle);
       formData.append('content', editor?.getHTML() || '');
       formData.append('category', category);
+      formData.append('status', isPublished ? 'published' : 'draft');
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -114,7 +115,7 @@ export default function CreatePost() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Animated Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white py-8 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white py-8 relative overflow-hidden mt-10">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="absolute top-4 left-4 w-20 h-20 bg-white/10 rounded-full animate-bounce"></div>
         <div className="absolute bottom-4 right-4 w-16 h-16 bg-yellow-300/20 rounded-full animate-pulse"></div>
@@ -130,12 +131,11 @@ export default function CreatePost() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Dashboard
               </button>
-             
             </div>
 
-             <h1 className="text-4xl font-bold mb-2 align-middle text-white animate-fade-in">
-                Create New Story
-              </h1>
+            <h1 className="text-4xl font-bold mb-2 text-white animate-fade-in">
+              Create New Story
+            </h1>
 
             <div className="text-right">
               <div className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent animate-pulse">
@@ -148,9 +148,9 @@ export default function CreatePost() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Animated Card */}
-          <div className="bg-white shadow-2xl rounded-2xl overflow-hidden transform hover:scale-[1.01] transition-all duration-300">
+        <div className="max-w-full mx-auto">
+          {/* Full Width Card */}
+          <div className="bg-white shadow-2xl rounded-2xl overflow-hidden transform hover:scale-[1.005] transition-all duration-300">
             <div className="p-8">
               {error && (
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg">
@@ -168,8 +168,34 @@ export default function CreatePost() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Title and Category Row */}
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {/* Category - Full Width */}
+                <div className="group">
+                  <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                    Category
+                  </label>
+                  <select
+                    id="category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="block w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-150 ease-in-out group-hover:border-purple-300"
+                    required
+                  >
+                    <option value="">Select a category</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Food">Food</option>
+                    <option value="Lifestyle">Lifestyle</option>
+                    <option value="Health">Health & Wellness</option>
+                    <option value="Business">Business</option>
+                    <option value="Education">Education</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {/* Title (Left) and Short Description (Right) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="group">
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
                       Story Title
@@ -184,50 +210,26 @@ export default function CreatePost() {
                       required
                     />
                   </div>
+
                   <div className="group">
                     <label htmlFor="subtitle" className="block text-sm font-medium text-gray-700 mb-2">
                       Short Description
                     </label>
-                    <input
-                      type="text"
+                    <textarea
                       id="subtitle"
                       value={subtitle}
                       onChange={(e) => setSubtitle(e.target.value)}
-                      className="block w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-150 ease-in-out group-hover:border-purple-300"
-                      placeholder="Enter a Short Description"
+                      rows={3}
+                      className="block w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-150 ease-in-out group-hover:border-purple-300 resize-none"
+                      placeholder="Enter a brief description of your story..."
                       required
                     />
-                  </div>
-
-                  <div className="group">
-                    <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                      Category
-                    </label>
-                    <select
-                      id="category"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="block w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-150 ease-in-out group-hover:border-purple-300"
-                      required
-                    >
-                      <option value="">Select a category</option>
-                      <option value="Technology">Technology</option>
-                      <option value="Travel">Travel</option>
-                      <option value="Food">Food</option>
-                      <option value="Lifestyle">Lifestyle</option>
-                      <option value="Health">Health & Wellness</option>
-                      <option value="Business">Business</option>
-                      <option value="Education">Education</option>
-                      <option value="Entertainment">Entertainment</option>
-                      <option value="Sports">Sports</option>
-                      <option value="Other">Other</option>
-                    </select>
                   </div>
                 </div>
 
                 {/* Image Upload */}
                 <div className="group">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Upload Image</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Upload Cover Image</label>
                   <div className="mt-1 flex items-center">
                     <input
                       type="file"
@@ -262,7 +264,7 @@ export default function CreatePost() {
                   )}
                 </div>
 
-                {/* Rich Text Editor */}
+                {/* Rich Text Editor - Full Width */}
                 <div className="group">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Story Content</label>
                   
@@ -399,17 +401,57 @@ export default function CreatePost() {
                     
                     <EditorContent
                       editor={editor}
-                      className="min-h-[400px] p-6 focus:outline-none prose max-w-none"
+                      className="min-h-[500px] p-6 focus:outline-none prose max-w-none"
                       style={{ fontSize: `${fontSize}px` }}
                     />
                   </div>
                 </div>
 
-                {/* Submit Button */}
-                <div className="flex justify-end pt-6 border-t border-gray-200">
+                {/* Publish Status and Submit */}
+                <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                  {/* Publish Checkbox */}
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        id="isPublished"
+                        checked={isPublished}
+                        onChange={(e) => setIsPublished(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <label
+                        htmlFor="isPublished"
+                        className={`flex items-center cursor-pointer transition-all duration-200 ${
+                          isPublished ? 'text-green-600' : 'text-gray-600'
+                        }`}
+                      >
+                        <div
+                          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 mr-3 ${
+                            isPublished
+                              ? 'bg-green-500 border-green-500'
+                              : 'border-gray-300 hover:border-green-400'
+                          }`}
+                        >
+                          {isPublished && (
+                            <CheckCircle className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                        <span className="font-medium">
+                          {isPublished ? 'Publish immediately' : 'Save as draft'}
+                        </span>
+                      </label>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {isPublished 
+                        ? 'Your story will be visible to all readers' 
+                        : 'Your story will be saved as a draft'
+                      }
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
                   <button
                     type="submit"
-                    onChange={handleSubmit}
                     disabled={isSubmitting}
                     className="inline-flex items-center px-8 py-4 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
                   >
@@ -419,12 +461,12 @@ export default function CreatePost() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Publishing Story...
+                        {isPublished ? 'Publishing...' : 'Saving Draft...'}
                       </>
                     ) : (
                       <>
                         <Save className="w-5 h-5 mr-2" />
-                        Publish Story
+                        {isPublished ? 'Publish Story' : 'Save as Draft'}
                       </>
                     )}
                   </button>

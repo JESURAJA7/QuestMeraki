@@ -46,24 +46,23 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20' 
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+          ? 'bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20'
           : 'bg-white/95 backdrop-blur-sm'
-      }`}>
+        }`}>
         <div className="container mx-auto px-4 lg:px-6">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-             {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-           <img src={logoimg} alt="Logo" className="h-18 w-12 " />
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2">
+              <img src={logoimg} alt="Logo" className="h-18 w-12 " />
               <div className="flex items-center space-x-2">
-            
-            <span className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent animate-pulse">
-              QuestMeraki
-            </span>
-          </div>
-          </Link>
+
+                <span className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent animate-pulse">
+                  QuestMeraki
+                </span>
+              </div>
+            </Link>
 
 
             {/* Desktop Navigation */}
@@ -77,11 +76,10 @@ const Navbar: React.FC = () => {
                 <Link
                   key={path}
                   to={path}
-                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 group relative ${
-                    isActivePath(path)
+                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 group relative ${isActivePath(path)
                       ? 'text-indigo-600 bg-indigo-50 shadow-sm'
                       : 'text-gray-700 hover:text-indigo-600 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{label}</span>
@@ -97,11 +95,10 @@ const Navbar: React.FC = () => {
               {/* Search Button */}
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className={`p-3 rounded-xl transition-all duration-200 relative group ${
-                  isSearchOpen 
-                    ? 'bg-indigo-100 text-indigo-600 shadow-sm' 
+                className={`p-3 rounded-xl transition-all duration-200 relative group ${isSearchOpen
+                    ? 'bg-indigo-100 text-indigo-600 shadow-sm'
                     : 'hover:bg-gray-100 text-gray-600'
-                }`}
+                  }`}
               >
                 <Search className="w-5 h-5" />
                 <div className="absolute inset-0 rounded-xl bg-indigo-600 opacity-0 group-hover:opacity-10 transition-opacity duration-200"></div>
@@ -114,8 +111,8 @@ const Navbar: React.FC = () => {
                   className="flex items-center space-x-2 p-3 rounded-xl hover:bg-gray-100 transition-all duration-200 group relative"
                 >
                   {isAuthenticated && user?.avatar ? (
-                    <img 
-                      src={user.avatar} 
+                    <img
+                      src={user.avatar}
                       alt={user.name}
                       className="w-8 h-8 rounded-full border-2 border-transparent group-hover:border-indigo-200 transition-all duration-200"
                     />
@@ -138,8 +135,8 @@ const Navbar: React.FC = () => {
                         <div className="px-4 py-3 border-b border-gray-100">
                           <div className="flex items-center space-x-3">
                             {user?.avatar ? (
-                              <img 
-                                src={user.avatar} 
+                              <img
+                                src={user.avatar}
                                 alt={user.name}
                                 className="w-12 h-12 rounded-full"
                               />
@@ -156,11 +153,10 @@ const Navbar: React.FC = () => {
                                 )}
                               </div>
                               <p className="text-sm text-gray-500">{user?.email}</p>
-                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${
-                                user?.role === 'admin' 
-                                  ? 'bg-yellow-100 text-yellow-800' 
+                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${user?.role === 'admin'
+                                  ? 'bg-yellow-100 text-yellow-800'
                                   : 'bg-blue-100 text-blue-800'
-                              }`}>
+                                }`}>
                                 {user?.role === 'admin' ? 'Administrator' : 'User'}
                               </span>
                             </div>
@@ -186,11 +182,19 @@ const Navbar: React.FC = () => {
                               <Plus className="w-5 h-5 group-hover:text-indigo-500" />
                               <span>Create Post</span>
                             </Link>
+                            <Link
+                              to="/my-blogs"
+                              className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors group"
+                              onClick={() => setIsProfileMenuOpen(false)}
+                            >
+                              <FileText className="w-5 h-5 group-hover:text-emerald-500" />
+                              <span>My Blogs</span>
+                            </Link>
                           </div>
                         )}
 
                         {/* User Menu Items */}
-                        <div className="py-2 border-b border-gray-100">
+                        {/* <div className="py-2 border-b border-gray-100">
                           <Link
                             to="/create-blog"
                             className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors group"
@@ -207,7 +211,7 @@ const Navbar: React.FC = () => {
                             <FileText className="w-5 h-5 group-hover:text-emerald-500" />
                             <span>My Blogs</span>
                           </Link>
-                        </div>
+                        </div> */}
 
                         {/* Logout */}
                         <div className="py-2">
@@ -279,18 +283,17 @@ const Navbar: React.FC = () => {
                   <Link
                     key={path}
                     to={path}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
-                      isActivePath(path)
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActivePath(path)
                         ? 'text-indigo-600 bg-indigo-50'
                         : 'text-gray-700 hover:bg-gray-50'
-                    }`}
+                      }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Icon className="w-5 h-5" />
                     <span>{label}</span>
                   </Link>
                 ))}
-                
+
                 {/* Categories in mobile menu */}
                 <div className="pt-4 border-t border-gray-100">
                   <h3 className="px-4 py-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">

@@ -20,6 +20,7 @@ import UserBlogs from './pages/admin/UserBlogs';
 import BlogsPage from './pages/BlogsPage';
 import Contact from './pages/Contact';
 import About from './pages/About';
+import TrendingBlog from './pages/admin/TrendingBlogs';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
             <Route path="/admin/blogs" element={<PrivateRoute><AdminBlogs /></PrivateRoute>} />
             <Route path="/admin/edit-post/:id" element={<PrivateRoute><EditPost /></PrivateRoute>} />
             <Route path="/admin/user-blogs" element={<PrivateRoute><UserBlogs /></PrivateRoute>} />
+            <Route path="/admin/trending-blogs" element={<PrivateRoute><TrendingBlog /></PrivateRoute>} />
           </Routes>
         </main>
         <Footer />

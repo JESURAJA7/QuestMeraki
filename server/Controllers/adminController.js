@@ -61,14 +61,112 @@ export const stateAdmin = async (req, res) => {
     const pendingBlogs = await Blog.countDocuments({ status: 'pending' });
     const publishedBlogs = await Blog.countDocuments({ status: 'published' });
 
+     const viewsAggregation = await Blog.aggregate([
+      { $group: { _id: null, totalViews: { $sum: '$views' } } }
+    ]);
+    const totalViews = viewsAggregation[0]?.totalViews || 0;
+
+    const avgViewsAggregation = await Blog.aggregate([
+      { $group: { _id: null, avgViews: { $avg: '$views' } } }
+    ]);
+    const avgViews = avgViewsAggregation[0]?.avgViews || 0;
+
+    const trendingPostsCount = await Blog.countDocuments({ views: { $gt: avgViews } });
+
     res.json({
-      totalUsers,
-      publishedBlogs,
       totalBlogs,
-      pendingBlogs
+      publishedBlogs,
+      totalViews,
+      trendingPostsCount
     });
   } catch (error) {
     console.error('Error fetching admin stats:', error);
     res.status(500).json({ error: 'Error fetching admin stats' });
+  }
+};
+
+export const getAdminStats = async (req, res) => {
+  try {
+    const totalBlogs = await Blog.countDocuments();
+    const publishedBlogs = await Blog.countDocuments({ status: 'published' });
+
+    const viewsAggregation = await Blog.aggregate([
+      { $group: { _id: null, totalViews: { $sum: '$views' } } }
+    ]);
+    const totalViews = viewsAggregation[0]?.totalViews || 0;
+
+    const avgViewsAggregation = await Blog.aggregate([
+      { $group: { _id: null, avgViews: { $avg: '$views' } } }
+    ]);
+    const avgViews = avgViewsAggregation[0]?.avgViews || 0;
+
+    const trendingPostsCount = await Blog.countDocuments({ views: { $gt: avgViews } });
+
+    res.json({
+      totalBlogs,
+      publishedBlogs,
+      totalViews,
+      trendingPostsCount
+    });
+  } catch (error) {
+    console.error('Error getting admin stats:', error);
+    res.status(500).json({ message: 'Failed to get stats' });
+  }
+};
+
+// Get trending blogs for admin
+export const getTrendingBlogs = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+
+    const blogs = await Blog.find({ status: 'published' })
+      .populate('author', 'name email')
+      .sort({ views: -1, createdAt: -1 })
+      .limit(limit);
+
+    const trendingBlogs = blogs.map(blog => ({
+      id: blog._id,
+      title: blog.title,
+      author: blog.author.name,
+      views: blog.views || 0,
+      publishedAt: blog.createdAt,
+      category: blog.category || 'Uncategorized',
+      growthRate: Math.random() * 50 + 5, // Mock growth rate
+      excerpt: blog.excerpt || blog.content.substring(0, 150) + '...',
+      readTime: Math.ceil(blog.content.split(' ').length / 200),
+      thumbnail: blog.imageUrl
+    }));
+
+    res.json(trendingBlogs);
+  } catch (error) {
+    console.error('Error getting trending blogs:', error);
+    res.status(500).json({ message: 'Failed to get trending blogs' });
+  }
+};
+
+export const fetchRecentActivity = async () => {
+  try {
+    const response = await fetch(`${API_URL}/admin/recent-activity`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (response.ok) {
+      return await response.json();
+    }
+    
+    // Return mock data if endpoint doesn't exist yet
+    return [
+      { id: '1', type: 'blog_published', title: 'New article published', time: '2 hours ago', user: 'John Doe' },
+      { id: '2', type: 'blog_viewed', title: 'Article got 100+ views', time: '4 hours ago', user: 'AI Article' },
+      { id: '3', type: 'blog_viewed', title: 'Trending post milestone reached', time: '6 hours ago', user: 'React Guide' }
+    ];
+  } catch (error) {
+    console.error('Error fetching recent activity:', error);
+    // Return mock data on error
+    return [
+      { id: '1', type: 'blog_published', title: 'New article published', time: '2 hours ago', user: 'John Doe' },
+      { id: '2', type: 'blog_viewed', title: 'Article got 100+ views', time: '4 hours ago', user: 'AI Article' },
+      { id: '3', type: 'blog_viewed', title: 'Trending post milestone reached', time: '6 hours ago', user: 'React Guide' }
+    ];
   }
 };

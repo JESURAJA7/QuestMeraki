@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Download, ArrowRight, Clock, User, TrendingUp, BookOpen, Star, Eye, ChevronLeft, ChevronRight, Heart, Bookmark, Share2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { Link } from 'react-router-dom';
+import { useBlogViews } from '../hooks/useBlogViews';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -17,10 +18,19 @@ interface Blog {
   createdAt: string;
   imageUrl: string;
   category: string;
+  views?: number;
+  growthRate?: number;
+}
+
+interface TrendingBlog extends Blog {
+  views: number;
+  growthRate: number;
 }
 
 export default function Home() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [trendingBlogs, setTrendingBlogs] = useState<TrendingBlog[]>([]);
+  const [popularBlogs, setPopularBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -32,201 +42,231 @@ export default function Home() {
   const totalPages = Math.ceil(blogs.length / blogsPerPage);
 
   useEffect(() => {
-    fetchBlogs();
+    fetchAllData();
   }, []);
 
-  const fetchBlogs = async () => {
+  const fetchAllData = async () => {
     try {
-      const response = await fetch(`${API_URL}/blogs`);
-      if (response.ok) {
-        const data = await response.json();
-        setBlogs(data);
-      } else {
-        setError('Failed to fetch blogs');
+      const [blogsResponse, trendingResponse, popularResponse] = await Promise.all([
+        fetch(`${API_URL}/blogs`),
+        fetch(`${API_URL}/blogs/trending?limit=4`),
+        fetch(`${API_URL}/blogs/popular?limit=5`)
+      ]);
+
+      if (blogsResponse.ok) {
+        const blogsData = await blogsResponse.json();
+        setBlogs(blogsData);
+      }
+
+      if (trendingResponse.ok) {
+        const trendingData = await trendingResponse.json();
+        setTrendingBlogs(trendingData);
+      }
+
+      if (popularResponse.ok) {
+        const popularData = await popularResponse.json();
+        setPopularBlogs(popularData);
       }
     } catch (error) {
-      setError('Failed to fetch blogs');
+      console.error('Failed to fetch data:', error);
+      setError('Failed to load content');
     } finally {
       setLoading(false);
     }
   };
 
-const downloadBlogAsPDF = async (blog: Blog) => {
-  setDownloadingId(blog._id);
-  try {
-    const pdf = new jsPDF();
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 20;
-    let yPosition = margin;
+  const handleBlogClick = async (blogId: string) => {
+    try {
+      await fetch(`${API_URL}/blogs/${blogId}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          referrer: document.referrer,
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to track view:', error);
+    }
+  };
 
-    // ===== COVER PAGE =====
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(24);
-    pdf.setTextColor(30, 30, 100);
-    pdf.text(blog.title, pageWidth / 2, pageHeight / 3, { align: 'center' });
+  const downloadBlogAsPDF = async (blog: Blog) => {
+    setDownloadingId(blog._id);
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      let yPosition = margin;
 
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(14);
-    pdf.setTextColor(80, 80, 80);
-    pdf.text(`By ${blog.author.name}`, pageWidth / 2, pageHeight / 3 + 20, { align: 'center' });
+      // ===== COVER PAGE =====
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(24);
+      pdf.setTextColor(30, 30, 100);
+      pdf.text(blog.title, pageWidth / 2, pageHeight / 3, { align: 'center' });
 
-    pdf.text(
-      new Date(blog.createdAt).toLocaleDateString('en-US', {
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(14);
+      pdf.setTextColor(80, 80, 80);
+      pdf.text(`By ${blog.author.name}`, pageWidth / 2, pageHeight / 3 + 20, { align: 'center' });
+
+      pdf.text(
+        new Date(blog.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        pageWidth / 2,
+        pageHeight / 3 + 35,
+        { align: 'center' }
+      );
+
+      pdf.addPage();
+      yPosition = margin;
+
+      // ===== HEADER =====
+      pdf.setFillColor(240, 240, 240);
+      pdf.rect(0, 0, pageWidth, 40, 'F');
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(16);
+      pdf.setTextColor(50, 50, 150);
+      pdf.text('QuestMeraki', margin, 25);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Premium Blog Content', pageWidth - margin, 25, { align: 'right' });
+
+      yPosition = 50;
+
+      // ===== TITLE BLOCK =====
+      pdf.setFillColor(30, 30, 100);
+      pdf.rect(margin, yPosition - 10, pageWidth - 2 * margin, 20, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(blog.title, pageWidth / 2, yPosition + 3, { align: 'center' });
+
+      yPosition += 25;
+
+      // ===== METADATA =====
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(12);
+      pdf.setTextColor(80, 80, 80);
+
+      const authorText = `👤 ${blog.author.name}`;
+      const categoryText = `🏷️ ${blog.category}`;
+      const dateText = `📅 ${new Date(blog.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
-      }),
-      pageWidth / 2,
-      pageHeight / 3 + 35,
-      { align: 'center' }
-    );
+      })}`;
 
-    pdf.addPage();
-    yPosition = margin;
+      const metadataSpacing = (pageWidth - 2 * margin) / 3;
 
-    // ===== HEADER =====
-    pdf.setFillColor(240, 240, 240);
-    pdf.rect(0, 0, pageWidth, 40, 'F');
+      pdf.text(authorText, margin, yPosition);
+      pdf.text(categoryText, margin + metadataSpacing, yPosition);
+      pdf.text(dateText, margin + metadataSpacing * 2, yPosition);
 
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(16);
-    pdf.setTextColor(50, 50, 150);
-    pdf.text('QuestMeraki', margin, 25);
+      yPosition += 20;
 
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text('Premium Blog Content', pageWidth - margin, 25, { align: 'right' });
-
-    yPosition = 50;
-
-    // ===== TITLE BLOCK =====
-    pdf.setFillColor(30, 30, 100);
-    pdf.rect(margin, yPosition - 10, pageWidth - 2 * margin, 20, 'F');
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(blog.title, pageWidth / 2, yPosition + 3, { align: 'center' });
-
-    yPosition += 25;
-
-    // ===== METADATA =====
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(12);
-    pdf.setTextColor(80, 80, 80);
-
-    const authorText = `👤 ${blog.author.name}`;
-    const categoryText = `🏷️ ${blog.category}`;
-    const dateText = `📅 ${new Date(blog.createdAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })}`;
-
-    const metadataSpacing = (pageWidth - 2 * margin) / 3;
-
-    pdf.text(authorText, margin, yPosition);
-    pdf.text(categoryText, margin + metadataSpacing, yPosition);
-    pdf.text(dateText, margin + metadataSpacing * 2, yPosition);
-
-    yPosition += 20;
-
-    // ===== DIVIDER =====
-    pdf.setDrawColor(200, 200, 200);
-    pdf.setLineWidth(0.5);
-    pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-    yPosition += 20;
-
-    // ===== TEXT HELPER =====
-    const addText = (
-      text: string,
-      fontSize: number,
-      isBold = false,
-      color: [number, number, number] = [0, 0, 0],
-      lineHeight = 1.5
-    ) => {
-      if (!text.trim()) return;
-
-      pdf.setFontSize(fontSize);
-      pdf.setTextColor(...color);
-      pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
-
-      const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
-      const lineHeightPx = fontSize * lineHeight;
-      const spaceNeeded = lines.length * lineHeightPx;
-
-      if (yPosition + spaceNeeded > pageHeight - margin) {
-        pdf.addPage();
-        yPosition = margin;
-      }
-
-      pdf.text(lines, margin, yPosition);
-      yPosition += spaceNeeded + fontSize * 0.5; // Dynamic spacing
-    };
-
-    // ===== CLEAN HTML & PARSE PARAGRAPHS =====
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = blog.content;
-
-    const unwantedElements = tempDiv.querySelectorAll('script, style, iframe');
-    unwantedElements.forEach(el => el.remove());
-
-    const rawParagraphs: string[] = [];
-    tempDiv.querySelectorAll('p, div').forEach(node => {
-      const text = node.textContent?.trim();
-      if (text && !/^[\s\u00A0]*$/.test(text)) {
-        rawParagraphs.push(text);
-      }
-    });
-
-    const paragraphs = rawParagraphs.length
-      ? rawParagraphs
-      : (tempDiv.textContent || '')
-          .split(/\r?\n+/)
-          .map(p => p.trim())
-          .filter(p => p.length > 0);
-
-    // ===== RENDER PARAGRAPHS =====
-    for (const para of paragraphs) {
-      const isQuote = para.startsWith('"') || para.startsWith('“');
-      const style: { fontSize: number; isBold: boolean; color: [number, number, number] } = isQuote
-        ? { fontSize: 11, isBold: true, color: [100, 50, 150] }
-        : { fontSize: 11, isBold: false, color: [60, 60, 60] };
-      addText(para, style.fontSize, style.isBold, style.color);
-    }
-
-    // ===== FOOTER ON ALL PAGES =====
-    const totalPages = pdf.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      pdf.setPage(i);
-      pdf.setDrawColor(220, 220, 220);
+      // ===== DIVIDER =====
+      pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.5);
-      pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 20;
 
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(`QuestMeraki`, margin, pageHeight - 8);
-      pdf.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      // ===== TEXT HELPER =====
+      const addText = (
+        text: string,
+        fontSize: number,
+        isBold = false,
+        color: [number, number, number] = [0, 0, 0],
+        lineHeight = 1.5
+      ) => {
+        if (!text.trim()) return;
+
+        pdf.setFontSize(fontSize);
+        pdf.setTextColor(...color);
+        pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
+
+        const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
+        const lineHeightPx = fontSize * lineHeight;
+        const spaceNeeded = lines.length * lineHeightPx;
+
+        if (yPosition + spaceNeeded > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+
+        pdf.text(lines, margin, yPosition);
+        yPosition += spaceNeeded + fontSize * 0.5; // Dynamic spacing
+      };
+
+      // ===== CLEAN HTML & PARSE PARAGRAPHS =====
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = blog.content;
+
+      const unwantedElements = tempDiv.querySelectorAll('script, style, iframe');
+      unwantedElements.forEach(el => el.remove());
+
+      const rawParagraphs: string[] = [];
+      tempDiv.querySelectorAll('p, div').forEach(node => {
+        const text = node.textContent?.trim();
+        if (text && !/^[\s\u00A0]*$/.test(text)) {
+          rawParagraphs.push(text);
+        }
+      });
+
+      const paragraphs = rawParagraphs.length
+        ? rawParagraphs
+        : (tempDiv.textContent || '')
+            .split(/\r?\n+/)
+            .map(p => p.trim())
+            .filter(p => p.length > 0);
+
+      // ===== RENDER PARAGRAPHS =====
+      for (const para of paragraphs) {
+        const isQuote = para.startsWith('"') || para.startsWith('"');
+        const style: { fontSize: number; isBold: boolean; color: [number, number, number] } = isQuote
+          ? { fontSize: 11, isBold: true, color: [100, 50, 150] }
+          : { fontSize: 11, isBold: false, color: [60, 60, 60] };
+        addText(para, style.fontSize, style.isBold, style.color);
+      }
+
+      // ===== FOOTER ON ALL PAGES =====
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setDrawColor(220, 220, 220);
+        pdf.setLineWidth(0.5);
+        pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`QuestMeraki`, margin, pageHeight - 8);
+        pdf.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      }
+
+      // ===== SAVE FILE =====
+      const fileName = `${blog.title
+        .replace(/[^a-z0-9]/gi, '_')
+        .replace(/_+/g, '_')
+        .toLowerCase()}.pdf`;
+
+      pdf.save(fileName);
+
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setError('Failed to generate PDF. Please try again.');
+    } finally {
+      setDownloadingId(null);
     }
-
-    // ===== SAVE FILE =====
-    const fileName = `${blog.title
-      .replace(/[^a-z0-9]/gi, '_')
-      .replace(/_+/g, '_')
-      .toLowerCase()}.pdf`;
-
-    pdf.save(fileName);
-
-  } catch (error) {
-    console.error('Error generating PDF:', error);
-    setError('Failed to generate PDF. Please try again.');
-  } finally {
-    setDownloadingId(null);
-  }
-};
-
-
+  };
 
   const handlePageChange = (newPage: number, direction: 'next' | 'prev') => {
     if (newPage < 1 || newPage > totalPages || isFlipping) return;
@@ -281,8 +321,6 @@ const downloadBlogAsPDF = async (blog: Blog) => {
   }
 
   const featuredPost = blogs[0];
-  //const latestPosts = blogs.slice(1)
-  const popularPosts = blogs.slice(3, 8);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
@@ -355,9 +393,9 @@ const downloadBlogAsPDF = async (blog: Blog) => {
               </div>
               <div className="text-center group">
                 <div className="text-3xl font-bold text-blue-600 group-hover:scale-110 transition-transform duration-300">
-                  10k+
+                  {blogs.reduce((total, blog) => total + (blog.views || 0), 0).toLocaleString()}+
                 </div>
-                <div className="text-gray-600 mt-1">Happy Readers</div>
+                <div className="text-gray-600 mt-1">Total Views</div>
               </div>
               <div className="text-center group">
                 <div className="text-3xl font-bold text-pink-600 group-hover:scale-110 transition-transform duration-300">
@@ -377,7 +415,7 @@ const downloadBlogAsPDF = async (blog: Blog) => {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-gray-900 flex items-center">
                 <TrendingUp className="w-8 h-8 text-purple-600 mr-3" />
-                New Story...
+                Featured Story
               </h2>
             </div>
 
@@ -415,6 +453,14 @@ const downloadBlogAsPDF = async (blog: Blog) => {
                       )}
                     </button>
                   </div>
+                  {featuredPost.views && (
+                    <div className="absolute bottom-6 left-6">
+                      <div className="bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm flex items-center">
+                        <Eye className="w-4 h-4 mr-1" />
+                        {featuredPost.views.toLocaleString()} views
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
@@ -443,6 +489,7 @@ const downloadBlogAsPDF = async (blog: Blog) => {
 
                   <Link
                     to={`/blogs/${featuredPost._id}`}
+                    onClick={() => handleBlogClick(featuredPost._id)}
                     className="inline-flex items-center bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 group"
                   >
                     Read Full Story
@@ -480,7 +527,11 @@ const downloadBlogAsPDF = async (blog: Blog) => {
                 }}
               >
                 {getCurrentPageBlogs().map((post, index) => (
-                  <Link to={`/blogs/${post._id}`} key={post._id}>
+                  <Link 
+                    to={`/blogs/${post._id}`} 
+                    key={post._id}
+                    onClick={() => handleBlogClick(post._id)}
+                  >
                     <article
                       className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 group border border-gray-100 hover:border-purple-200 transform hover:-translate-y-2"
                       style={{
@@ -501,6 +552,16 @@ const downloadBlogAsPDF = async (blog: Blog) => {
                             {post.category}
                           </span>
                         </div>
+
+                        {/* View Count */}
+                        {post.views && (
+                          <div className="absolute bottom-4 left-4">
+                            <div className="bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center">
+                              <Eye className="w-3 h-3 mr-1" />
+                              {post.views.toLocaleString()}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
@@ -572,7 +633,7 @@ const downloadBlogAsPDF = async (blog: Blog) => {
                           <div className="flex items-center space-x-3 text-sm text-gray-400">
                             <span className="flex items-center">
                               <Eye className="w-4 h-4 mr-1" />
-                              {Math.floor(Math.random() * 1000) + 100}
+                              {post.views?.toLocaleString() || '0'}
                             </span>
                             <span className="flex items-center">
                               <Heart className="w-4 h-4 mr-1" />
@@ -634,15 +695,19 @@ const downloadBlogAsPDF = async (blog: Blog) => {
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-8">
               {/* Popular Posts */}
-              {popularPosts.length > 0 && (
+              {popularBlogs.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 border border-gray-100">
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
                     <Star className="w-5 h-5 text-purple-600 mr-2" />
                     Popular Posts
                   </h3>
                   <div className="space-y-4">
-                    {popularPosts.map((post, index) => (
-                      <Link to={`/blogs/${post._id}`} key={post._id}>
+                    {popularBlogs.map((post, index) => (
+                      <Link 
+                        to={`/blogs/${post._id}`} 
+                        key={post._id}
+                        onClick={() => handleBlogClick(post._id)}
+                      >
                         <div className="flex items-start space-x-3 group cursor-pointer hover:bg-gray-50 rounded-xl p-3 transition-all duration-200 hover:shadow-md">
                           <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
                             <img
@@ -658,7 +723,7 @@ const downloadBlogAsPDF = async (blog: Blog) => {
                             <div className="flex items-center text-xs text-gray-500 space-x-3">
                               <span className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
                                 <Eye className="w-3 h-3 mr-1" />
-                                {Math.floor(Math.random() * 1000) + 100}
+                                {post.views?.toLocaleString() || '0'}
                               </span>
                               <span>
                                 {new Date(post.createdAt).toLocaleDateString('en-US', {
@@ -676,34 +741,52 @@ const downloadBlogAsPDF = async (blog: Blog) => {
               )}
 
               {/* Trending Posts */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <TrendingUp className="w-5 h-5 text-purple-600 mr-2" />
-                  Trending Now
-                </h3>
-                <div className="space-y-4">
-                  {blogs.slice(0, 4).map((post, index) => (
-                    <Link to={`/blogs/${post._id}`} key={post._id}>
-                      <div className="flex items-start space-x-3 group cursor-pointer hover:bg-gray-50 rounded-xl p-3 transition-all duration-200 hover:shadow-md">
-                        <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200 shadow-lg">
-                          {index + 1}
+              {trendingBlogs.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 border border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <TrendingUp className="w-5 h-5 text-purple-600 mr-2" />
+                    Trending Now
+                  </h3>
+                  <div className="space-y-4">
+                    {trendingBlogs.map((post, index) => (
+                      <Link 
+                        to={`/blogs/${post._id}`} 
+                        key={post._id}
+                        onClick={() => handleBlogClick(post._id)}
+                      >
+                        <div className="flex items-start space-x-3 group cursor-pointer hover:bg-gray-50 rounded-xl p-3 transition-all duration-200 hover:shadow-md">
+                          <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200 shadow-lg">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2 mb-1">
+                              {post.title}
+                            </h4>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>
+                                {new Date(post.createdAt).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </span>
+                              <div className="flex items-center space-x-2">
+                                <span className="flex items-center">
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  {post.views.toLocaleString()}
+                                </span>
+                                <span className="flex items-center text-green-600">
+                                  <TrendingUp className="w-3 h-3 mr-1" />
+                                  +{post.growthRate}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2 mb-1">
-                            {post.title}
-                          </h4>
-                          <p className="text-xs text-gray-500">
-                            {new Date(post.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Newsletter */}
               <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-shadow duration-300 relative overflow-hidden">
