@@ -10,8 +10,8 @@ const router = express.Router();
 // Create a new blog post
 router.post('/', auth, upload.single('image'), async (req, res) => {
   try {
-    const { title,subtitle, content, category } = req.body;
-    console.log('Creating blog post:', title, subtitle, content, category);
+    const { title,subtitle, content, category ,status} = req.body;
+    console.log('status :', status);
     
     if (!req.file) {
       return res.status(400).json({ error: 'Image is required' });
@@ -30,11 +30,12 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       title,
       subtitle,
       content,
-      category,
+      category, 
+      status,
       imageUrl: cloudinaryResponse.secure_url,
       cloudinaryId: cloudinaryResponse.public_id,
       author: req.user._id,
-      status: req.user.role === 'admin' ? 'published' : 'pending'
+      //status: req.user.role === 'admin' ? 'published' : 'pending'
     });
 
     await blog.save();
@@ -365,5 +366,63 @@ router.get('/popular', async (req, res) => {
   }
 });
 
+//search blogs.
+router.get('/search', async (req, res) => {
+  try {
+    const { query, category, dateFrom, dateTo, sortBy } = req.query;
+    //console.log('Search parameters:', { query, category, dateFrom, dateTo, sortBy });
+
+    // At least one search parameter should be present
+    if (!query && !category && !dateFrom && !dateTo) {
+      return res.status(400).json({ 
+        message: 'At least one search parameter is required (query, category, or date range)' 
+      });
+    }
+
+    // Build the query object
+    const searchQuery = { status: 'published' };
+
+    if (query) {
+      searchQuery.$or = [
+        { title: { $regex: query, $options: 'i' } },
+        { content: { $regex: query, $options: 'i' } },
+        { tags: { $regex: query, $options: 'i' } }
+      ];
+    }
+
+    if (category) {
+      searchQuery.category = { $regex: category, $options: 'i' };
+    }
+
+    if (dateFrom || dateTo) {
+      searchQuery.createdAt = {};
+      if (dateFrom) searchQuery.createdAt.$gte = new Date(dateFrom);
+      if (dateTo) searchQuery.createdAt.$lte = new Date(dateTo);
+    }
+
+    // Build sort options
+    let sortOptions = {};
+    switch (sortBy) {
+      case 'oldest':
+        sortOptions = { createdAt: 1 };
+        break;
+      case 'title':
+        sortOptions = { title: 1 };
+        break;
+      default: // 'recent' or default
+        sortOptions = { createdAt: -1 };
+    }
+
+    const blogs = await Blog.find(searchQuery)
+      .select('title category imageUrl createdAt')
+      .sort(sortOptions)
+      .limit(50); // Limit results for performance
+
+    res.json(blogs);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
 
 export default router;

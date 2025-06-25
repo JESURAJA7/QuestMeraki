@@ -93,6 +93,9 @@ export default function ManagePosts() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                S.No
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Title
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -110,9 +113,11 @@ export default function ManagePosts() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {posts.map((post) => (
-              
+            {posts.map((post, index) => (
               <tr key={post._id}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {index + 1}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{post.title}</div>
                 </td>
@@ -121,7 +126,7 @@ export default function ManagePosts() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                    ${post.status === 'published' ? 'bg-green-100 text-green-800' :
+          ${post.status === 'published' ? 'bg-green-100 text-green-800' :
                       post.status === 'rejected' ? 'bg-red-100 text-red-800' :
                         'bg-yellow-100 text-yellow-800'}`}>
                     {post.status}
@@ -165,6 +170,7 @@ export default function ManagePosts() {
               </tr>
             ))}
           </tbody>
+
         </table>
       </div>
     </div>

@@ -397,13 +397,13 @@ export default function AdminDashboard() {
                 color="bg-green-500"
               />
               
-              {/* <ActionCard
+              <ActionCard
                 to="/my-blogs"
                 icon={BarChart3}
-                title="Analytics"
+                title="My Blogs"
                 description="Track performance and engagement metrics"
                 color="bg-purple-500"
-              /> */}
+              />
             </div>
 
             {/* Trending Blogs Section */}
