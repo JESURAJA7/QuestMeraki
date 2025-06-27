@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
 import {
   ArrowLeft,
   Calendar,
@@ -15,6 +16,7 @@ import {
   Facebook,
   Twitter,
   Linkedin,
+  FileDown,
   Copy,
   Check
 } from 'lucide-react';
@@ -51,31 +53,10 @@ const BlogDetail: React.FC = () => {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  // Mock related posts
-  const relatedPosts = [
-    {
-      id: '1',
-      title: 'Advanced React Patterns You Should Know',
-      image: 'https://images.pexels.com/photos/11035471/pexels-photo-11035471.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1',
-      category: 'Technology',
-      readTime: '7 min read'
-    },
-    {
-      id: '2',
-      title: 'Building Scalable Web Applications',
-      image: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1',
-      category: 'Technology',
-      readTime: '12 min read'
-    },
-    {
-      id: '3',
-      title: 'Modern CSS Techniques for Better UX',
-      image: 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1',
-      category: 'Technology',
-      readTime: '9 min read'
-    }
-  ];
+
+
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -191,6 +172,180 @@ const BlogDetail: React.FC = () => {
       </div>
     );
   }
+  const downloadBlogAsPDF = async (blog: Post) => {
+    setDownloadingId(blog._id);
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      let yPosition = margin;
+
+      // ===== COVER PAGE =====
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(24);
+      pdf.setTextColor(30, 30, 100);
+      pdf.text(blog.title, pageWidth / 2, pageHeight / 3, { align: 'center' });
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(14);
+      pdf.setTextColor(80, 80, 80);
+      pdf.text(`By ${blog.author.name}`, pageWidth / 2, pageHeight / 3 + 20, { align: 'center' });
+
+      pdf.text(
+        new Date(blog.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        pageWidth / 2,
+        pageHeight / 3 + 35,
+        { align: 'center' }
+      );
+
+      pdf.addPage();
+      yPosition = margin;
+
+      // ===== HEADER =====
+      pdf.setFillColor(240, 240, 240);
+      pdf.rect(0, 0, pageWidth, 40, 'F');
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(16);
+      pdf.setTextColor(50, 50, 150);
+      pdf.text('QuestMeraki', margin, 25);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Premium Blog Content', pageWidth - margin, 25, { align: 'right' });
+
+      yPosition = 50;
+
+      // ===== TITLE BLOCK =====
+      pdf.setFillColor(30, 30, 100);
+      pdf.rect(margin, yPosition - 10, pageWidth - 2 * margin, 20, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(blog.title, pageWidth / 2, yPosition + 3, { align: 'center' });
+
+      yPosition += 25;
+
+      // ===== METADATA =====
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(12);
+      pdf.setTextColor(80, 80, 80);
+
+      const authorText = `👤 ${blog.author.name}`;
+      const categoryText = `🏷️ ${blog.category}`;
+      const dateText = `📅 ${new Date(blog.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}`;
+
+      const metadataSpacing = (pageWidth - 2 * margin) / 3;
+
+      pdf.text(authorText, margin, yPosition);
+      pdf.text(categoryText, margin + metadataSpacing, yPosition);
+      pdf.text(dateText, margin + metadataSpacing * 2, yPosition);
+
+      yPosition += 20;
+
+      // ===== DIVIDER =====
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 20;
+
+      // ===== TEXT HELPER =====
+      const addText = (
+        text: string,
+        fontSize: number,
+        isBold = false,
+        color: [number, number, number] = [0, 0, 0],
+        lineHeight = 1.5
+      ) => {
+        if (!text.trim()) return;
+
+        pdf.setFontSize(fontSize);
+        pdf.setTextColor(...color);
+        pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
+
+        const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
+        const lineHeightPx = fontSize * lineHeight;
+        const spaceNeeded = lines.length * lineHeightPx;
+
+        if (yPosition + spaceNeeded > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+
+        pdf.text(lines, margin, yPosition);
+        yPosition += spaceNeeded + fontSize * 0.5; // Dynamic spacing
+      };
+
+      // ===== CLEAN HTML & PARSE PARAGRAPHS =====
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = blog.content;
+
+      const unwantedElements = tempDiv.querySelectorAll('script, style, iframe');
+      unwantedElements.forEach(el => el.remove());
+
+      const rawParagraphs: string[] = [];
+      tempDiv.querySelectorAll('p, div').forEach(node => {
+        const text = node.textContent?.trim();
+        if (text && !/^[\s\u00A0]*$/.test(text)) {
+          rawParagraphs.push(text);
+        }
+      });
+
+      const paragraphs = rawParagraphs.length
+        ? rawParagraphs
+        : (tempDiv.textContent || '')
+          .split(/\r?\n+/)
+          .map(p => p.trim())
+          .filter(p => p.length > 0);
+
+      // ===== RENDER PARAGRAPHS =====
+      for (const para of paragraphs) {
+        const isQuote = para.startsWith('"') || para.startsWith('"');
+        const style: { fontSize: number; isBold: boolean; color: [number, number, number] } = isQuote
+          ? { fontSize: 11, isBold: true, color: [100, 50, 150] }
+          : { fontSize: 11, isBold: false, color: [60, 60, 60] };
+        addText(para, style.fontSize, style.isBold, style.color);
+      }
+
+      // ===== FOOTER ON ALL PAGES =====
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setDrawColor(220, 220, 220);
+        pdf.setLineWidth(0.5);
+        pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`QuestMeraki`, margin, pageHeight - 8);
+        pdf.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      }
+
+      // ===== SAVE FILE =====
+      const fileName = `${blog.title
+        .replace(/[^a-z0-9]/gi, '_')
+        .replace(/_+/g, '_')
+        .toLowerCase()}.pdf`;
+
+      pdf.save(fileName);
+
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setError('Failed to generate PDF. Please try again.');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   if (!post) return null;
 
@@ -382,6 +537,18 @@ const BlogDetail: React.FC = () => {
               </article>
             </div>
           </div>
+          {/* save Pdf */}
+          <div className="flex justify-end mb-4 mt-5">
+            <button
+              onClick={() => downloadBlogAsPDF(post)}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2"
+            >
+              <FileDown className="w-4 h-4" />
+              <span>Download PDF</span>
+            </button>
+          </div>
+
+
 
           {/* Tags */}
           {/* {post.tags && post.tags.length > 0 && (
@@ -460,3 +627,5 @@ const BlogDetail: React.FC = () => {
 };
 
 export default BlogDetail;
+
+
