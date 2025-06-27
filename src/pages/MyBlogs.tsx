@@ -275,45 +275,47 @@ export default function MyBlogs() {
             {blogs.map((blog) => (
               <div key={blog._id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 group">
                 {/* Card Header with Image */}
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={blog.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=600'}
-                    alt={blog.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                  
-                  {/* Status Badge */}
-                  <div className="absolute top-4 left-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(blog.status)}`}>
-                      <span className="mr-1">{getStatusIcon(blog.status)}</span>
-                      {blog.status.charAt(0).toUpperCase() + blog.status.slice(1)}
-                    </span>
-                  </div>
+                <Link to={`/blogs/${blog._id}`} className="block group-hover:opacity-90 transition-opacity duration-300">
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={blog.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=600'}
+                      alt={blog.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                    
+                    {/* Status Badge */}
+                    <div className="absolute top-4 left-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(blog.status)}`}>
+                        <span className="mr-1">{getStatusIcon(blog.status)}</span>
+                        {blog.status.charAt(0).toUpperCase() + blog.status.slice(1)}
+                      </span>
+                    </div>
 
-                  {/* Download Button */}
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button
-                      onClick={() => downloadAsPDF(blog)}
-                      disabled={downloadingId === blog._id}
-                      className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white hover:shadow-lg transition-all duration-300 disabled:opacity-50"
-                      title="Download as PDF"
-                    >
-                      {downloadingId === blog._id ? (
-                        <div className="animate-spin w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full"></div>
-                      ) : (
-                        <Download className="w-4 h-4 text-gray-700" />
-                      )}
-                    </button>
-                  </div>
+                    {/* Download Button */}
+                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <button
+                        onClick={(e) => { e.preventDefault(); downloadAsPDF(blog); }}
+                        disabled={downloadingId === blog._id}
+                        className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+                        title="Download as PDF"
+                      >
+                        {downloadingId === blog._id ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full"></div>
+                        ) : (
+                          <Download className="w-4 h-4 text-gray-700" />
+                        )}
+                      </button>
+                    </div>
 
-                  {/* Category Tag */}
-                  <div className="absolute bottom-4 left-4">
-                    <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                      {blog.category}
-                    </span>
+                    {/* Category Tag */}
+                    <div className="absolute bottom-4 left-4">
+                      <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                        {blog.category}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </Link>
 
                 {/* Card Content */}
                 <div className="p-6">

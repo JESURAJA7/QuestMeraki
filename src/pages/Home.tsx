@@ -303,7 +303,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 mt-5 mb-10">
         <div className="container mx-auto px-4 py-16">
           <div className="flex justify-center items-center h-64">
             <div className="relative">
@@ -337,7 +337,7 @@ export default function Home() {
   const featuredPost = blogs[0];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 mt-5">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white mt-5">
       <section className="relative">
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}
@@ -360,7 +360,7 @@ export default function Home() {
         </Swiper>
       </section>
 
-      <div className="container mx-auto px-4 pb-16">
+      <div className="container mx-auto px-4 pb-16 mt-10">
         {/* Featured Post */}
         {featuredPost && (
           <section className="mb-20">
