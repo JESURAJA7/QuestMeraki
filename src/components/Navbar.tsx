@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, Search, X, User as UserIcon, Sparkles, Crown, Plus, Settings, LogOut, Home, FileText, Info, Mail } from 'lucide-react';
 import SearchBar from './SearchBar';
 import { useAuth } from '../hooks/useAuth';
-import logoimg from '../assets/images/image.png';
+import logoimg from '../assets/images/QuestMeraki_Logo Recreated-01.jpg';
 
 
 const Navbar: React.FC = () => {
@@ -15,7 +15,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  const categories = ['Technology', 'Travel', 'Food', 'Lifestyle'];
+  const categories = ['Technology', 'Travel', 'Food', 'Lifestyle','Ideating Zone'];
 
   // Handle scroll effect
   useEffect(() => {

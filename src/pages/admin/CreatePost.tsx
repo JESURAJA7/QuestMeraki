@@ -181,16 +181,10 @@ export default function CreatePost() {
                     required
                   >
                     <option value="">Select a category</option>
-                    <option value="Technology">Technology</option>
-                    <option value="Travel">Travel</option>
-                    <option value="Food">Food</option>
-                    <option value="Lifestyle">Lifestyle</option>
-                    <option value="Health">Health & Wellness</option>
-                    <option value="Business">Business</option>
-                    <option value="Education">Education</option>
-                    <option value="Entertainment">Entertainment</option>
-                    <option value="Sports">Sports</option>
-                    <option value="Other">Other</option>
+                    <option value="palms of his hands">Palms Of His Hands</option>
+                    <option value="perspective">Perspective</option>
+                    <option value="questionnaires">Questionnaires - Samples</option>
+                    <option value="ideating zone">Ideating Zone</option>  
                   </select>
                 </div>
 

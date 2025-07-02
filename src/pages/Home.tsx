@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Download, ArrowRight, Clock, User, TrendingUp, BookOpen, Star, Eye, ChevronLeft, ChevronRight, Heart, Bookmark, Share2 } from 'lucide-react';
+import { Download, ArrowRight, Clock, User, TrendingUp, BookOpen, Star, Eye, Heart, Bookmark, Share2, ChevronRight, Sparkles, Calendar, Tag, ChevronLeft } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { Link } from 'react-router-dom';
-import { useBlogViews } from '../hooks/useBlogViews';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectCoverflow } from 'swiper/modules';
 import 'swiper/css';
@@ -41,11 +40,10 @@ export default function Home() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [isFlipping, setIsFlipping] = useState(false);
-  const [flipDirection, setFlipDirection] = useState<'next' | 'prev'>('next');
 
-  const blogsPerPage = 6;
-  const totalPages = Math.ceil(blogs.length / blogsPerPage);
+  // Pagination settings
+  const BLOGS_PER_PAGE = 6;
+  const totalPages = Math.ceil(blogs.length / BLOGS_PER_PAGE);
 
   useEffect(() => {
     fetchAllData();
@@ -210,7 +208,7 @@ export default function Home() {
         }
 
         pdf.text(lines, margin, yPosition);
-        yPosition += spaceNeeded + fontSize * 0.5; // Dynamic spacing
+        yPosition += spaceNeeded + fontSize * 0.5;
       };
 
       // ===== CLEAN HTML & PARSE PARAGRAPHS =====
@@ -274,41 +272,105 @@ export default function Home() {
     }
   };
 
-  const handlePageChange = (newPage: number, direction: 'next' | 'prev') => {
-    if (newPage < 1 || newPage > totalPages || isFlipping) return;
-
-    setIsFlipping(true);
-    setFlipDirection(direction);
-
-    setTimeout(() => {
-      setCurrentPage(newPage);
-      setTimeout(() => {
-        setIsFlipping(false);
-      }, 300);
-    }, 300);
+  // Get current page blogs
+  const getCurrentPageBlogs = () => {
+    const startIndex = (currentPage - 1) * BLOGS_PER_PAGE;
+    return blogs.slice(startIndex, startIndex + BLOGS_PER_PAGE);
   };
 
-  const getCurrentPageBlogs = () => {
-    const startIndex = (currentPage - 1) * blogsPerPage;
-    return blogs.slice(startIndex, startIndex + blogsPerPage);
+  // Pagination component
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const getVisiblePages = () => {
+      const delta = 2;
+      const range = [];
+      const rangeWithDots = [];
+
+      for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+        range.push(i);
+      }
+
+      if (currentPage - delta > 2) {
+        rangeWithDots.push(1, '...');
+      } else {
+        rangeWithDots.push(1);
+      }
+
+      rangeWithDots.push(...range);
+
+      if (currentPage + delta < totalPages - 1) {
+        rangeWithDots.push('...', totalPages);
+      } else {
+        rangeWithDots.push(totalPages);
+      }
+
+      return rangeWithDots;
+    };
+
+    return (
+      <div className="flex items-center justify-center mt-12 space-x-2">
+        {/* Previous Button */}
+        <button
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
+        >
+          <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+          Previous
+        </button>
+
+        {/* Page Numbers */}
+        <div className="flex space-x-1">
+          {getVisiblePages().map((page, index) => (
+            <button
+              key={index}
+              onClick={() => typeof page === 'number' && setCurrentPage(page)}
+              disabled={page === '...'}
+              className={`min-w-[40px] h-10 rounded-xl font-medium transition-all duration-300 ${
+                currentPage === page
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105'
+                  : page === '...'
+                  ? 'bg-transparent text-gray-400 cursor-default'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-md hover:scale-105'
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
+
+        {/* Next Button */}
+        <button
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
+        >
+          Next
+          <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+        </button>
+      </div>
+    );
   };
 
   const bannerImages = [
-    "https://res.cloudinary.com/dczicfhcv/image/upload/v1751007925/Screenshot_2025-06-23_134543_sssdwi.png",
+    "https://res.cloudinary.com/dczicfhcv/image/upload/v1751441511/QuestMeraki_Cleaned_Banner_embd5z.png",
     "https://res.cloudinary.com/dczicfhcv/image/upload/v1750413681/blog_images/d1o6ahqrigtznldy6ff9.png",
     "https://res.cloudinary.com/dczicfhcv/image/upload/v1750411273/blog_images/v1wqsmhixp0o6hizepdn.png",
     "https://res.cloudinary.com/dczicfhcv/image/upload/v1750231598/blog_images/huuj7i4cea1mees6c5sm.png"
   ];
 
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 mt-5 mb-10">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 mt-5 mb-10">
         <div className="container mx-auto px-4 py-16">
           <div className="flex justify-center items-center h-64">
             <div className="relative">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200"></div>
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-600 border-t-transparent absolute top-0 left-0"></div>
+              <div className="animate-spin rounded-full h-20 w-20 border-4 border-indigo-100"></div>
+              <div className="animate-spin rounded-full h-20 w-20 border-4 border-indigo-600 border-t-transparent absolute top-0 left-0"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Sparkles className="w-8 h-8 text-indigo-600 animate-pulse" />
+              </div>
             </div>
           </div>
         </div>
@@ -318,16 +380,22 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
         <div className="container mx-auto px-4 py-16">
-          <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 text-center border border-red-100">
+            <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
-            <p className="text-gray-600">{error}</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Something went wrong</h3>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              Try Again
+            </button>
           </div>
         </div>
       </div>
@@ -335,17 +403,26 @@ export default function Home() {
   }
 
   const featuredPost = blogs[0];
+  const currentPageBlogs = getCurrentPageBlogs();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white mt-5">
-      <section className="relative">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 mt-5">
+      {/* Hero Banner */}
+      <section className="relative overflow-hidden">
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}
-          navigation
-          pagination={{ clickable: true }}
-          autoplay={{ delay: 5000 }}
+          navigation={{
+            nextEl: '.swiper-button-next-custom',
+            prevEl: '.swiper-button-prev-custom',
+          }}
+          pagination={{ 
+            clickable: true,
+            bulletClass: 'swiper-pagination-bullet-custom',
+            bulletActiveClass: 'swiper-pagination-bullet-active-custom'
+          }}
+          autoplay={{ delay: 5000, disableOnInteraction: false }}
           loop
-          className="h-[500px] md:h-[600px]"
+          className="h-[500px] md:h-[600px] rounded-3xl mx-4 mt-8 overflow-hidden shadow-2xl"
         >
           {bannerImages.map((image, index) => (
             <SwiperSlide key={index}>
@@ -353,20 +430,50 @@ export default function Home() {
                 className="w-full h-full bg-cover bg-center relative"
                 style={{ backgroundImage: `url(${image})` }}
               >
-                <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-white max-w-4xl px-6">
+                    <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                      Discover Amazing
+                      <span className="block bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                        Stories
+                      </span>
+                    </h1>
+                    <p className="text-xl md:text-2xl mb-8 text-gray-200 max-w-2xl mx-auto">
+                      Explore insights, inspiration, and ideas that matter
+                    </p>
+                    <Link
+                      to="/blogs"
+                      className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-2xl hover:shadow-3xl hover:-translate-y-1 group"
+                    >
+                      Explore All Stories
+                      <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                </div>
               </div>
             </SwiperSlide>
           ))}
+          
+          {/* Custom Navigation */}
+          <div className="swiper-button-prev-custom absolute left-6 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 cursor-pointer group">
+            <ChevronRight className="w-6 h-6 text-white rotate-180 group-hover:scale-110 transition-transform" />
+          </div>
+          <div className="swiper-button-next-custom absolute right-6 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 cursor-pointer group">
+            <ChevronRight className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+          </div>
         </Swiper>
       </section>
 
-      <div className="container mx-auto px-4 pb-16 mt-10">
+      <div className="container mx-auto px-4 pb-16 mt-16">
         {/* Featured Post */}
         {featuredPost && (
           <section className="mb-20">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 flex items-center">
-                <TrendingUp className="w-8 h-8 text-purple-600 mr-3" />
+              <h2 className="text-4xl font-bold text-gray-900 flex items-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mr-4">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
                 Featured Story
               </h2>
             </div>
@@ -381,7 +488,7 @@ export default function Home() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
                   <div className="absolute top-6 left-6">
-                    <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg animate-pulse">
+                    <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
                       {featuredPost.category}
                     </span>
                   </div>
@@ -399,7 +506,7 @@ export default function Home() {
                       title="Download as PDF"
                     >
                       {downloadingId === featuredPost._id ? (
-                        <div className="animate-spin w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full"></div>
+                        <div className="animate-spin w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
                       ) : (
                         <Download className="w-5 h-5 text-gray-700" />
                       )}
@@ -442,7 +549,7 @@ export default function Home() {
                   <Link
                     to={`/blogs/${featuredPost._id}`}
                     onClick={() => handleBlogClick(featuredPost._id)}
-                    className="inline-flex items-center bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 group"
+                    className="inline-flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 group"
                   >
                     Read Full Story
                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -458,189 +565,158 @@ export default function Home() {
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold text-gray-900 flex items-center">
-                <BookOpen className="w-8 h-8 text-purple-600 mr-3" />
+                <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center mr-3">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
                 Latest Stories
               </h2>
-              <div className="text-sm text-gray-500">
-                Page {currentPage} of {totalPages}
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-500">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Link
+                  to="/blogs"
+                  className="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-semibold transition-colors group"
+                >
+                  View All
+                  <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
             </div>
 
-            {/* Stories Grid with Flip Animation */}
-            <div className="relative">
-              <div
-                className={`grid grid-cols-1 md:grid-cols-2 gap-8 transition-all duration-600 ${isFlipping
-                  ? `transform ${flipDirection === 'next' ? 'rotateY-180' : '-rotateY-180'} opacity-0`
-                  : 'transform rotateY-0 opacity-100'
-                  }`}
-                style={{
-                  transformStyle: 'preserve-3d',
-                  perspective: '1000px'
-                }}
-              >
-                {getCurrentPageBlogs().map((post, index) => (
-                  <Link
-                    to={`/blogs/${post._id}`}
-                    key={post._id}
-                    onClick={() => handleBlogClick(post._id)}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {currentPageBlogs.map((post, index) => (
+                <Link
+                  to={`/blogs/${post._id}`}
+                  key={post._id}
+                  onClick={() => handleBlogClick(post._id)}
+                >
+                  <article
+                    className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 group border border-gray-100 hover:border-indigo-200 transform hover:-translate-y-2"
+                    style={{
+                      animationDelay: `${index * 100}ms`
+                    }}
                   >
-                    <article
-                      className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 group border border-gray-100 hover:border-purple-200 transform hover:-translate-y-2"
-                      style={{
-                        animationDelay: `${index * 100}ms`
-                      }}
-                    >
-                      <div className="relative overflow-hidden">
-                        <img
-                          src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=600'}
-                          alt={post.title}
-                          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={post.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=600'}
+                        alt={post.title}
+                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                        {/* Category Badge */}
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-white/95 backdrop-blur-sm text-purple-600 px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                            {post.category}
-                          </span>
-                        </div>
-
-                        {/* View Count */}
-                        {post.views && (
-                          <div className="absolute bottom-4 left-4">
-                            <div className="bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center">
-                              <Eye className="w-3 h-3 mr-1" />
-                              {post.views.toLocaleString()}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Action Buttons */}
-                        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 hover:scale-110 group/btn"
-                          >
-                            <Heart className="w-4 h-4 text-gray-700 group-hover/btn:text-red-500 transition-colors" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 hover:scale-110 group/btn"
-                          >
-                            <Share2 className="w-4 h-4 text-gray-700 group-hover/btn:text-blue-500 transition-colors" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              downloadBlogAsPDF(post);
-                            }}
-                            disabled={downloadingId === post._id}
-                            className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 disabled:opacity-50 hover:scale-110"
-                            title="Download as PDF"
-                          >
-                            {downloadingId === post._id ? (
-                              <div className="animate-spin w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full"></div>
-                            ) : (
-                              <Download className="w-4 h-4 text-gray-700" />
-                            )}
-                          </button>
-                        </div>
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-white/95 backdrop-blur-sm text-indigo-600 px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                          {post.category}
+                        </span>
                       </div>
 
-                      <div className="p-6">
-                        <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
-                          <span className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                            <User className="w-3 h-3 mr-1" />
-                            {post.author.name}
+                      {post.views && (
+                        <div className="absolute bottom-4 left-4">
+                          <div className="bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center">
+                            <Eye className="w-3 h-3 mr-1" />
+                            {post.views.toLocaleString()}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 hover:scale-110 group/btn"
+                        >
+                          <Heart className="w-4 h-4 text-gray-700 group-hover/btn:text-red-500 transition-colors" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 hover:scale-110 group/btn"
+                        >
+                          <Share2 className="w-4 h-4 text-gray-700 group-hover/btn:text-blue-500 transition-colors" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            downloadBlogAsPDF(post);
+                          }}
+                          disabled={downloadingId === post._id}
+                          className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 disabled:opacity-50 hover:scale-110"
+                          title="Download as PDF"
+                        >
+                          {downloadingId === post._id ? (
+                            <div className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
+                          ) : (
+                            <Download className="w-4 h-4 text-gray-700" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-6">
+                      <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
+                        <span className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
+                          <User className="w-3 h-3 mr-1" />
+                          {post.author.name}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {new Date(post.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </div>
+
+                      <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-2">
+                        {post.title}
+                      </h3>
+
+                      <p className="text-gray-600 mb-4 leading-relaxed line-clamp-3">
+                        {post.excerpt}
+                      </p>
+
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center text-indigo-600 font-medium group-hover:text-indigo-700 transition-colors">
+                          Read More
+                          <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                        </span>
+                        <div className="flex items-center space-x-3 text-sm text-gray-400">
+                          <span className="flex items-center">
+                            <Eye className="w-4 h-4 mr-1" />
+                            {post.views?.toLocaleString() || '0'}
                           </span>
                           <span className="flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {new Date(post.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric'
-                            })}
+                            <Heart className="w-4 h-4 mr-1" />
+                            {Math.floor(Math.random() * 50) + 5}
                           </span>
-                        </div>
-
-                        <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors leading-tight line-clamp-2">
-                          {post.title}
-                        </h3>
-
-                        <p className="text-gray-600 mb-4 leading-relaxed line-clamp-3">
-                          {post.excerpt}
-                        </p>
-
-                        <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center text-purple-600 font-medium group-hover:text-purple-700 transition-colors">
-                            Read More
-                            <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                          </span>
-                          <div className="flex items-center space-x-3 text-sm text-gray-400">
-                            <span className="flex items-center">
-                              <Eye className="w-4 h-4 mr-1" />
-                              {post.views?.toLocaleString() || '0'}
-                            </span>
-                            <span className="flex items-center">
-                              <Heart className="w-4 h-4 mr-1" />
-                              {Math.floor(Math.random() * 50) + 5}
-                            </span>
-                          </div>
                         </div>
                       </div>
-                    </article>
-                  </Link>
-                ))}
-              </div>
+                    </div>
+                  </article>
+                </Link>
+              ))}
             </div>
 
-            {/* Pagination with Flip Animation */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center mt-12 space-x-2">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1, 'prev')}
-                  disabled={currentPage === 1 || isFlipping}
-                  className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
-                  Previous
-                </button>
+            {/* Pagination */}
+            {renderPagination()}
 
-                <div className="flex space-x-1">
-                  {[...Array(totalPages)].map((_, index) => {
-                    const pageNumber = index + 1;
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber, pageNumber > currentPage ? 'next' : 'prev')}
-                        disabled={isFlipping}
-                        className={`w-10 h-10 rounded-lg font-medium transition-all duration-300 ${currentPage === pageNumber
-                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-md'
-                          }`}
-                      >
-                        {pageNumber}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => handlePageChange(currentPage + 1, 'next')}
-                  disabled={currentPage === totalPages || isFlipping}
-                  className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
-            )}
+            {/* View All Button */}
+            <div className="text-center mt-12">
+              <Link
+                to="/blogs"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 group"
+              >
+                <BookOpen className="w-5 h-5 mr-2" />
+                Explore All Stories
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -650,7 +726,9 @@ export default function Home() {
               {popularBlogs.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 border border-gray-100">
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <Star className="w-5 h-5 text-purple-600 mr-2" />
+                    <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                      <Star className="w-4 h-4 text-white" />
+                    </div>
                     Popular Posts
                   </h3>
                   <div className="space-y-4">
@@ -669,7 +747,7 @@ export default function Home() {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2 mb-2">
+                            <h4 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 mb-2">
                               {post.title}
                             </h4>
                             <div className="flex items-center text-xs text-gray-500 space-x-3">
@@ -696,7 +774,9 @@ export default function Home() {
               {trendingBlogs.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 border border-gray-100">
                   <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <TrendingUp className="w-5 h-5 text-purple-600 mr-2" />
+                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mr-3">
+                      <TrendingUp className="w-4 h-4 text-white" />
+                    </div>
                     Trending Now
                   </h3>
                   <div className="space-y-4">
@@ -707,11 +787,11 @@ export default function Home() {
                         onClick={() => handleBlogClick(post._id)}
                       >
                         <div className="flex items-start space-x-3 group cursor-pointer hover:bg-gray-50 rounded-xl p-3 transition-all duration-200 hover:shadow-md">
-                          <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200 shadow-lg">
+                          <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 group-hover:scale-105 transition-transform duration-200 shadow-lg">
                             {index + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2 mb-1">
+                            <h4 className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2 mb-1">
                               {post.title}
                             </h4>
                             <div className="flex items-center justify-between text-xs text-gray-500">
@@ -741,11 +821,14 @@ export default function Home() {
               )}
 
               {/* Newsletter */}
-              <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-blue-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-shadow duration-300 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-700 via-blue-600 to-purple-800 opacity-0 hover:opacity-50 transition-opacity duration-300"></div>
+              <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 rounded-2xl shadow-lg p-6 text-white hover:shadow-xl transition-shadow duration-300 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-700 via-purple-700 to-blue-700 opacity-0 hover:opacity-50 transition-opacity duration-300"></div>
                 <div className="relative z-10">
-                  <h3 className="text-xl font-bold mb-3">Stay Updated</h3>
-                  <p className="text-purple-100 mb-4 text-sm">
+                  <h3 className="text-xl font-bold mb-3 flex items-center">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Stay Updated
+                  </h3>
+                  <p className="text-indigo-100 mb-4 text-sm">
                     Get the latest stories and insights delivered straight to your inbox.
                   </p>
                   <div className="space-y-3">
@@ -754,13 +837,12 @@ export default function Home() {
                       placeholder="Enter your email"
                       className="w-full px-4 py-3 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 shadow-inner"
                     />
-                    <button className="w-full bg-white text-purple-600 px-4 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                    <button className="w-full bg-white text-indigo-600 px-4 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 shadow-lg">
                       Subscribe
                     </button>
                   </div>
                 </div>
 
-                {/* Decorative Elements */}
                 <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full"></div>
                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white/5 rounded-full"></div>
               </div>
@@ -771,8 +853,8 @@ export default function Home() {
         {/* Empty State */}
         {blogs.length === 0 && !loading && (
           <div className="text-center py-20">
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-              <BookOpen className="w-12 h-12 text-purple-600" />
+            <div className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <BookOpen className="w-12 h-12 text-indigo-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">No Stories Yet</h3>
             <p className="text-gray-600 max-w-md mx-auto">
@@ -781,6 +863,35 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      <style>{`
+        .swiper-pagination-bullet-custom {
+          width: 12px;
+          height: 12px;
+          background: rgba(255, 255, 255, 0.5);
+          border-radius: 50%;
+          transition: all 0.3s ease;
+        }
+        
+        .swiper-pagination-bullet-active-custom {
+          background: white;
+          transform: scale(1.2);
+        }
+        
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        .line-clamp-3 {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 }
