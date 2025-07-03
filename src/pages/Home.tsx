@@ -431,7 +431,7 @@ export default function Home() {
                 style={{ backgroundImage: `url(${image})` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
+                {/* <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white max-w-4xl px-6">
                     <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
                       Discover Amazing
@@ -450,7 +450,7 @@ export default function Home() {
                       <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>
-                </div>
+                </div> */}
               </div>
             </SwiperSlide>
           ))}
