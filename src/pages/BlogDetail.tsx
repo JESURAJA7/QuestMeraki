@@ -706,11 +706,7 @@ const BlogDetail: React.FC = () => {
               />
               <div className="flex-1">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{post.author.name}</h3>
-                <p className="text-gray-600 mb-4">
-                  Passionate writer and educator sharing insights about business management, 
-                  case study analysis, and professional development. Always exploring new ways 
-                  to enhance learning experiences.
-                </p>
+              
                 <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                   Follow Author
                 </button>

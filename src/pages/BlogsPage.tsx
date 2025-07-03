@@ -77,24 +77,33 @@ export default function BlogsPage() {
   const filterBlogs = () => {
     let filtered = blogs;
 
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(blog =>
-        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.author.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    // Filter by search term with null/undefined checks
+    if (searchTerm && searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(blog => {
+        // Safe string checks with fallbacks
+        const title = blog?.title || '';
+        const excerpt = blog?.excerpt || '';
+        const authorName = blog?.author?.name || '';
+        
+        return (
+          title.toLowerCase().includes(searchLower) ||
+          excerpt.toLowerCase().includes(searchLower) ||
+          authorName.toLowerCase().includes(searchLower)
+        );
+      });
     }
 
     // Filter by category
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(blog => blog.category === selectedCategory);
+      filtered = filtered.filter(blog => blog?.category === selectedCategory);
     }
 
     // Filter by date
     if (selectedMonth) {
       const monthIndex = months.indexOf(selectedMonth);
       filtered = filtered.filter(blog => {
+        if (!blog?.createdAt) return false;
         const blogDate = new Date(blog.createdAt);
         return blogDate.getMonth() === monthIndex && blogDate.getFullYear() === selectedYear;
       });
@@ -104,11 +113,11 @@ export default function BlogsPage() {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime();
         case 'oldest':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          return new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime();
         case 'popular':
-          return (b.views || 0) - (a.views || 0);
+          return (b?.views || 0) - (a?.views || 0);
         default:
           return 0;
       }
@@ -211,15 +220,15 @@ export default function BlogsPage() {
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(24);
       pdf.setTextColor(30, 30, 100);
-      pdf.text(blog.title, pageWidth / 2, pageHeight / 3, { align: 'center' });
+      pdf.text(blog.title || 'Untitled', pageWidth / 2, pageHeight / 3, { align: 'center' });
 
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(14);
       pdf.setTextColor(80, 80, 80);
-      pdf.text(`By ${blog.author.name}`, pageWidth / 2, pageHeight / 3 + 20, { align: 'center' });
+      pdf.text(`By ${blog.author?.name || 'Unknown Author'}`, pageWidth / 2, pageHeight / 3 + 20, { align: 'center' });
 
       pdf.text(
-        new Date(blog.createdAt).toLocaleDateString('en-US', {
+        new Date(blog.createdAt || Date.now()).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
@@ -254,7 +263,7 @@ export default function BlogsPage() {
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(blog.title, pageWidth / 2, yPosition + 3, { align: 'center' });
+      pdf.text(blog.title || 'Untitled', pageWidth / 2, yPosition + 3, { align: 'center' });
 
       yPosition += 25;
 
@@ -263,9 +272,9 @@ export default function BlogsPage() {
       pdf.setFontSize(12);
       pdf.setTextColor(80, 80, 80);
 
-      const authorText = `👤 ${blog.author.name}`;
-      const categoryText = `🏷️ ${blog.category}`;
-      const dateText = `📅 ${new Date(blog.createdAt).toLocaleDateString('en-US', {
+      const authorText = `👤 ${blog.author?.name || 'Unknown Author'}`;
+      const categoryText = `🏷️ ${blog.category || 'Uncategorized'}`;
+      const dateText = `📅 ${new Date(blog.createdAt || Date.now()).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -287,7 +296,7 @@ export default function BlogsPage() {
 
       // Content
       const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = blog.content;
+      tempDiv.innerHTML = blog.content || blog.excerpt || 'No content available';
 
       const unwantedElements = tempDiv.querySelectorAll('script, style, iframe');
       unwantedElements.forEach(el => el.remove());
@@ -358,7 +367,7 @@ export default function BlogsPage() {
       }
 
       // Save file
-      const fileName = `${blog.title
+      const fileName = `${(blog.title || 'blog')
         .replace(/[^a-z0-9]/gi, '_')
         .replace(/_+/g, '_')
         .toLowerCase()}.pdf`;
@@ -377,12 +386,14 @@ export default function BlogsPage() {
     const availableMonths = new Set<string>();
     const categoryFilteredBlogs = selectedCategory === 'All'
       ? blogs
-      : blogs.filter(blog => blog.category === selectedCategory);
+      : blogs.filter(blog => blog?.category === selectedCategory);
 
     categoryFilteredBlogs.forEach(blog => {
-      const blogDate = new Date(blog.createdAt);
-      if (blogDate.getFullYear() === selectedYear) {
-        availableMonths.add(months[blogDate.getMonth()]);
+      if (blog?.createdAt) {
+        const blogDate = new Date(blog.createdAt);
+        if (blogDate.getFullYear() === selectedYear) {
+          availableMonths.add(months[blogDate.getMonth()]);
+        }
       }
     });
     return Array.from(availableMonths).sort((a, b) => months.indexOf(a) - months.indexOf(b));
@@ -392,17 +403,19 @@ export default function BlogsPage() {
     const years = new Set<number>();
     const categoryFilteredBlogs = selectedCategory === 'All'
       ? blogs
-      : blogs.filter(blog => blog.category === selectedCategory);
+      : blogs.filter(blog => blog?.category === selectedCategory);
 
     categoryFilteredBlogs.forEach(blog => {
-      years.add(new Date(blog.createdAt).getFullYear());
+      if (blog?.createdAt) {
+        years.add(new Date(blog.createdAt).getFullYear());
+      }
     });
     return Array.from(years).sort((a, b) => b - a);
   };
 
   const getBlogCountByCategory = (category: string) => {
     if (category === 'All') return blogs.length;
-    return blogs.filter(blog => blog.category === category).length;
+    return blogs.filter(blog => blog?.category === category).length;
   };
 
   const handleCategoryChange = (category: string) => {
@@ -443,15 +456,17 @@ export default function BlogsPage() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 mt-5">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-12">
+        {/* <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Explore Our
             <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Stories
             </span>
           </h1>
-          
-        </div>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Discover insights, inspiration, and ideas that matter to you
+          </p>
+        </div> */}
 
         {/* Search and Filters */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
@@ -678,16 +693,16 @@ export default function BlogsPage() {
                 {viewMode === 'grid' ? (
                   <BlogCard
                     id={blog._id}
-                    title={blog.title}
-                    excerpt={blog.excerpt}
-                    author={blog.author.name}
-                    date={new Date(blog.createdAt).toLocaleDateString('en-US', {
+                    title={blog.title || 'Untitled'}
+                    excerpt={blog.excerpt || 'No excerpt available'}
+                    author={blog.author?.name || 'Unknown Author'}
+                    date={new Date(blog.createdAt || Date.now()).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
                     })}
                     imageUrl={blog.imageUrl}
-                    category={blog.category}
+                    category={blog.category || 'Uncategorized'}
                   />
                 ) : (
                   <Link to={`/blogs/${blog._id}`}>
@@ -696,12 +711,12 @@ export default function BlogsPage() {
                         <div className="md:w-1/3 relative overflow-hidden">
                           <img
                             src={blog.imageUrl || 'https://images.pexels.com/photos/1591062/pexels-photo-1591062.jpeg?auto=compress&cs=tinysrgb&w=600'}
-                            alt={blog.title}
+                            alt={blog.title || 'Blog post'}
                             className="w-full h-48 md:h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           />
                           <div className="absolute top-4 left-4">
                             <span className="bg-white/95 backdrop-blur-sm text-indigo-600 px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                              {blog.category}
+                              {blog.category || 'Uncategorized'}
                             </span>
                           </div>
                           <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
@@ -727,11 +742,11 @@ export default function BlogsPage() {
                           <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
                             <span className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
                               <User className="w-3 h-3 mr-1" />
-                              {blog.author.name}
+                              {blog.author?.name || 'Unknown Author'}
                             </span>
                             <span className="flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
-                              {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                              {new Date(blog.createdAt || Date.now()).toLocaleDateString('en-US', {
                                 month: 'short',
                                 day: 'numeric',
                                 year: 'numeric'
@@ -746,11 +761,11 @@ export default function BlogsPage() {
                           </div>
 
                           <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors leading-tight">
-                            {blog.title}
+                            {blog.title || 'Untitled'}
                           </h3>
 
                           <p className="text-gray-600 mb-4 leading-relaxed line-clamp-3">
-                            {blog.excerpt}
+                            {blog.excerpt || 'No excerpt available'}
                           </p>
 
                           <div className="flex items-center justify-between">
