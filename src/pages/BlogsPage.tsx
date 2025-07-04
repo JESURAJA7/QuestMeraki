@@ -85,7 +85,7 @@ export default function BlogsPage() {
         const title = blog?.title || '';
         const excerpt = blog?.excerpt || '';
         const authorName = blog?.author?.name || '';
-        
+
         return (
           title.toLowerCase().includes(searchLower) ||
           excerpt.toLowerCase().includes(searchLower) ||
@@ -181,13 +181,12 @@ export default function BlogsPage() {
               key={index}
               onClick={() => typeof page === 'number' && setCurrentPage(page)}
               disabled={page === '...'}
-              className={`min-w-[40px] h-10 rounded-xl font-medium transition-all duration-300 ${
-                currentPage === page
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105'
-                  : page === '...'
+              className={`min-w-[40px] h-10 rounded-xl font-medium transition-all duration-300 ${currentPage === page
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105'
+                : page === '...'
                   ? 'bg-transparent text-gray-400 cursor-default'
                   : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-md hover:scale-105'
-              }`}
+                }`}
             >
               {page}
             </button>
@@ -453,20 +452,9 @@ export default function BlogsPage() {
   const currentPageBlogs = getCurrentPageBlogs();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 mt-5">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        {/* <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Explore Our
-            <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Stories
-            </span>
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover insights, inspiration, and ideas that matter to you
-          </p>
-        </div> */}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50  via-white to-purple-50  ">
+      <div className="container mx-auto px-2 ">
+
 
         {/* Search and Filters */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
@@ -482,6 +470,8 @@ export default function BlogsPage() {
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
             </div>
+
+
 
             {/* Controls */}
             <div className="flex items-center space-x-4">
@@ -527,42 +517,14 @@ export default function BlogsPage() {
                   }`}
               >
                 <Filter className="w-5 h-5 mr-2" />
-                Filters
+                Date Filters
               </button>
             </div>
           </div>
 
-          {/* Expanded Filters */}
+          {/* Expanded Filters - Now only contains date filters */}
           {showFilters && (
             <div className="mt-6 pt-6 border-t border-gray-200">
-              {/* Categories */}
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <Tag className="w-4 h-4 mr-2" />
-                  Categories
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => handleCategoryChange(category)}
-                      className={`px-4 py-2 rounded-full transition-all duration-200 flex items-center space-x-2 ${selectedCategory === category
-                        ? 'bg-indigo-600 text-white shadow-lg'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                    >
-                      <span>{category}</span>
-                      <span className={`text-xs px-2 py-1 rounded-full ${selectedCategory === category
-                        ? 'bg-indigo-500 text-white'
-                        : 'bg-gray-200 text-gray-600'
-                        }`}>
-                        {getBlogCountByCategory(category)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Date Filters */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -602,6 +564,34 @@ export default function BlogsPage() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Category Filter - Moved outside the filter section */}
+        <div className="mb-6 p-4 bg-white rounded-xl shadow-lg border border-gray-100">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+            <Tag className="w-4 h-4 mr-2" />
+            Categories
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => handleCategoryChange(category)}
+                className={`px-4 py-2 rounded-full transition-all duration-200 flex items-center space-x-2 ${selectedCategory === category
+                  ? 'bg-indigo-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+              >
+                <span>{category}</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${selectedCategory === category
+                  ? 'bg-indigo-500 text-white'
+                  : 'bg-gray-200 text-gray-600'
+                  }`}>
+                  {getBlogCountByCategory(category)}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Active Filters Display */}
@@ -669,7 +659,7 @@ export default function BlogsPage() {
               ({filteredBlogs.length} {filteredBlogs.length === 1 ? 'story' : 'stories'})
             </span>
           </h2>
-          
+
           {totalPages > 1 && (
             <div className="text-sm text-gray-500">
               Page {currentPage} of {totalPages}

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, Search, X, User as UserIcon, Sparkles, Crown, Plus, Settings, LogOut, Home, FileText, Info, Mail } from 'lucide-react';
 import SearchBar from './SearchBar';
 import { useAuth } from '../hooks/useAuth';
-import logoimg from '../assets/images/QuestMeraki_Logo Recreated-01.jpg';
+import logoimg from '../assets/images/QuestMeraki_Logo_Recreated-01-removebg-preview.png';
 
 
 const Navbar: React.FC = () => {
@@ -52,15 +52,15 @@ const Navbar: React.FC = () => {
         }`}>
         <div className="container mx-auto px-4 lg:px-6">
           <div className="flex justify-between items-center h-20">
-            {/* Logo */}
+           
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
-              <img src={logoimg} alt="Logo" className="h-18 w-12 " />
+              <img src={logoimg} alt="Logo" className="h-24[rem] w-32 " />
               <div className="flex items-center space-x-2">
 
-                <span className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent animate-pulse">
+                {/* <span className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent animate-pulse">
                   QuestMeraki
-                </span>
+                </span> */}
               </div>
             </Link>
 
