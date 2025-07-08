@@ -20,7 +20,7 @@ const blogSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['palms of his hands','perspective','questionnaires','ideating zone',],
+    enum: ['palms of his hands','perspective','questionnaires','ideating zone','others'],
   },
   imageUrl: {
     type: String,

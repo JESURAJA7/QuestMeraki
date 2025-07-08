@@ -44,7 +44,7 @@ export default function BlogsPage() {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
-  const categories = ["All", "Palms of his Hands", "Perspective", "Questionnaires", "Ideating zone"];
+  const categories = ["All", "Palms of his Hands", "Perspective", "Questionnaires", "Ideating zone",'others'];
 
   useEffect(() => {
     fetchBlogs();
@@ -453,7 +453,7 @@ export default function BlogsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50  via-white to-purple-50  ">
-      <div className="container mx-auto px-2 ">
+      <div className="container mx-auto px-5 ">
 
 
         {/* Search and Filters */}
