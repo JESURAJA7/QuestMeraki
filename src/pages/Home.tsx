@@ -407,62 +407,88 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 mt-5">
-      {/* Hero Banner */}
-      <section className="relative overflow-hidden">
-        <Swiper
-          modules={[Navigation, Pagination, Autoplay]}
-          navigation={{
-            nextEl: '.swiper-button-next-custom',
-            prevEl: '.swiper-button-prev-custom',
-          }}
-          pagination={{ 
-            clickable: true,
-            bulletClass: 'swiper-pagination-bullet-custom',
-            bulletActiveClass: 'swiper-pagination-bullet-active-custom'
-          }}
-          autoplay={{ delay: 5000, disableOnInteraction: false }}
-          loop
-          className="h-[500px] md:h-[600px] rounded-3xl mx-4 mt-8 overflow-hidden shadow-2xl"
-        >
-          {bannerImages.map((image, index) => (
-            <SwiperSlide key={index}>
+ {/* Animated Hero Banner */}
+      <section className="relative py-24 overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-pink-500/5 to-blue-600/10 animate-pulse"></div>
+
+          <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
+          <div className="absolute top-40 right-16 w-24 h-24 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}></div>
+          <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-gradient-to-r from-pink-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '2s', animationDuration: '5s' }}></div>
+          <div className="absolute top-32 right-1/3 w-20 h-20 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-20 animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '3.5s' }}></div>
+
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-600/10 to-transparent rounded-full animate-spin" style={{ animationDuration: '20s' }}></div>
+            <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-gradient-to-l from-blue-600/10 to-transparent rounded-full animate-spin" style={{ animationDuration: '25s', animationDirection: 'reverse' }}></div>
+          </div>
+
+          <div className="absolute inset-0">
+            {[...Array(6)].map((_, i) => (
               <div
-                className="w-full h-full bg-cover bg-center relative"
-                style={{ backgroundImage: `url(${image})` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
-                {/* <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white max-w-4xl px-6">
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                      Discover Amazing
-                      <span className="block bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                        Stories
-                      </span>
-                    </h1>
-                    <p className="text-xl md:text-2xl mb-8 text-gray-200 max-w-2xl mx-auto">
-                      Explore insights, inspiration, and ideas that matter
-                    </p>
-                    <Link
-                      to="/blogs"
-                      className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-2xl hover:shadow-3xl hover:-translate-y-1 group"
-                    >
-                      Explore All Stories
-                      <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </div>
-                </div> */}
+                key={i}
+                className="absolute w-2 h-2 bg-purple-500 rounded-full opacity-30 animate-ping"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${i * 0.5}s`,
+                  animationDuration: `${2 + Math.random() * 2}s`
+                }}
+              ></div>
+            ))}
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="mb-6 overflow-hidden">
+              <h1 className="text-5xl md:text-7xl font-bold animate-fade-in-up">
+                <span className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 bg-clip-text text-transparent animate-gradient-x">
+                  Quest
+                </span>
+                <span className="text-gray-900 ml-2 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                  Meraki
+                </span>
+              </h1>
+            </div>
+
+            <div className="mb-8 overflow-hidden">
+              <p className="text-xl md:text-2xl text-gray-600 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                Where curiosity meets creativity. Discover stories, insights, and ideas that inspire your journey of continuous learning and growth.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+              <button className="group border-2 border-purple-600 text-purple-600 px-8 py-4 rounded-xl font-semibold hover:bg-purple-600 hover:text-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1 relative overflow-hidden">
+                <Link to="/about" className="relative z-10">
+                  <span className="relative z-10">About us</span>
+                </Link>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </button>
+            </div>
+
+            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+              <div className="text-center group">
+                <div className="text-3xl font-bold text-purple-600 group-hover:scale-110 transition-transform duration-300">
+                  {blogs.length}+
+                </div>
+                <div className="text-gray-600 mt-1">Stories Published</div>
               </div>
-            </SwiperSlide>
-          ))}
-          
-          {/* Custom Navigation */}
-          <div className="swiper-button-prev-custom absolute left-6 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 cursor-pointer group">
-            <ChevronRight className="w-6 h-6 text-white rotate-180 group-hover:scale-110 transition-transform" />
+              <div className="text-center group">
+                <div className="text-3xl font-bold text-blue-600 group-hover:scale-110 transition-transform duration-300">
+                  {blogs.reduce((total, blog) => total + (blog.views || 0), 0).toLocaleString()}+
+                </div>
+                <div className="text-gray-600 mt-1">Total Views</div>
+              </div>
+              <div className="text-center group">
+                <div className="text-3xl font-bold text-pink-600 group-hover:scale-110 transition-transform duration-300">
+                  24/7
+                </div>
+                <div className="text-gray-600 mt-1">Fresh Content</div>
+              </div>
+            </div>
           </div>
-          <div className="swiper-button-next-custom absolute right-6 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all duration-300 cursor-pointer group">
-            <ChevronRight className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
-          </div>
-        </Swiper>
+        </div>
       </section>
 
       <div className="container mx-auto px-4 pb-16 mt-16">
