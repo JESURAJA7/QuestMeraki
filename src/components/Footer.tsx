@@ -1,5 +1,7 @@
 import React from 'react';
 import { BookOpen, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
 
 export default function Footer() {
   return (
@@ -15,7 +17,7 @@ export default function Footer() {
               <span className="text-2xl font-bold">QuestMeraki</span>
             </div>
             <p className="text-gray-400 mb-6 max-w-md">
-              Discover insightful articles, stories, and ideas that inspire curiosity and passion for learning. 
+              Discover insightful articles, stories, and ideas that inspire curiosity and passion for learning.
               Join our community of knowledge seekers and creative minds.
             </p>
             <div className="flex space-x-4">
@@ -38,21 +40,22 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Home</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Categories</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+              <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
+              <li><Link to="/blogs" className="text-gray-400 hover:text-white transition-colors">Blogs</Link></li>
+              <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors">About</Link></li>
+              <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
             </ul>
+
           </div>
 
           {/* Categories */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Categories</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Technology</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Lifestyle</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Business</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Travel</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Palms of his Hands</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Perspective</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Questionnaires</a></li>
+              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Ideating zone</a></li>
             </ul>
           </div>
         </div>

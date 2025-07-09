@@ -348,7 +348,7 @@ export default function MyBlogs() {
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="flex items-center space-x-2">
                       <Link
-                        to={`/post/${blog._id}`}
+                        to={`/blogs/${blog._id}`}
                         className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
                       >
                         <Eye className="w-4 h-4 mr-1" />
