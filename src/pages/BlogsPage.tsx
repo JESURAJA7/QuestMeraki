@@ -58,6 +58,14 @@ export default function BlogsPage() {
     setCurrentPage(1); // Reset to first page when filters change
   }, [selectedMonth, selectedYear, selectedCategory, searchTerm, sortBy]);
 
+  useEffect(() => {
+  // Scroll to top when page changes
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth' // Optional: adds smooth scrolling
+  });
+}, [currentPage]);
+
   const fetchBlogs = async () => {
     try {
       const response = await fetch(`${API_URL}/blogs`);
@@ -162,48 +170,54 @@ export default function BlogsPage() {
       return rangeWithDots;
     };
 
-    return (
-      <div className="flex items-center justify-center mt-12 space-x-2">
-        {/* Previous Button */}
-        <button
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
-        >
-          <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
-          Previous
-        </button>
+return (
+  <div className="flex items-center justify-center mt-12 space-x-2">
+    {/* Previous Button */}
+    <button
+      onClick={() => {
+        setCurrentPage(prev => Math.max(prev - 1, 1));
+      }}
+      disabled={currentPage === 1}
+      className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
+    >
+      <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+      Previous
+    </button>
 
-        {/* Page Numbers */}
-        <div className="flex space-x-1">
-          {getVisiblePages().map((page, index) => (
-            <button
-              key={index}
-              onClick={() => typeof page === 'number' && setCurrentPage(page)}
-              disabled={page === '...'}
-              className={`min-w-[40px] h-10 rounded-xl font-medium transition-all duration-300 ${currentPage === page
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105'
-                : page === '...'
-                  ? 'bg-transparent text-gray-400 cursor-default'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-md hover:scale-105'
-                }`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
+    {/* Page Numbers */}
+    {getVisiblePages().map((page, idx) => (
+      <button
+        key={idx}
+        onClick={() => {
+          if (typeof page === 'number') {
+            setCurrentPage(page);
+          }
+        }}
+        disabled={page === '...'}
+        className={`min-w-[40px] h-10 rounded-xl font-medium transition-all duration-300 ${currentPage === page
+          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105'
+          : page === '...'
+            ? 'bg-transparent text-gray-400 cursor-default'
+            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-md hover:scale-105'
+          }`}
+      >
+        {page}
+      </button>
+    ))}
 
-        {/* Next Button */}
-        <button
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-          className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
-        >
-          Next
-          <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-        </button>
-      </div>
-    );
+    {/* Next Button */}
+    <button
+      onClick={() => {
+        setCurrentPage(prev => Math.min(prev + 1, totalPages));
+      }}
+      disabled={currentPage === totalPages}
+      className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md group"
+    >
+      Next
+      <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+    </button>
+  </div>
+);
   };
 
   const downloadBlogAsPDF = async (blog: Blog) => {

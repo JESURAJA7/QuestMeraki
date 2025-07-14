@@ -21,6 +21,7 @@ import BlogsPage from './pages/BlogsPage';
 import Contact from './pages/Contact';
 import About from './pages/About';
 import TrendingBlog from './pages/admin/TrendingBlogs';
+import ManageDownloads from './pages/admin/ManageDownloads';
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
             <Route path="/admin/edit-post/:id" element={<PrivateRoute><EditPost /></PrivateRoute>} />
             <Route path="/admin/user-blogs" element={<PrivateRoute><UserBlogs /></PrivateRoute>} />
             <Route path="/admin/trending-blogs" element={<PrivateRoute><TrendingBlog /></PrivateRoute>} />
+            <Route path="/admin/manage-downloads" element={<PrivateRoute><ManageDownloads /></PrivateRoute>} />
           </Routes>
         </main>
         <Footer />

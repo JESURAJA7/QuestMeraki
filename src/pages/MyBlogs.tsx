@@ -231,7 +231,7 @@ export default function MyBlogs() {
            
           </div>
           <Link
-            to="/create-blog"
+            to="/admin/create-post"
             className="mt-4 sm:mt-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 flex items-center"
           >
             <Plus className="w-5 h-5 mr-2" />

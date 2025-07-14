@@ -27,6 +27,11 @@ const blogSchema = new mongoose.Schema({
     required: true
   },
   views: { type: Number, default: 0 },
+  likes: { type: Number, default: 0 },
+  downloadCount: {
+    type: Number,
+    default: 0
+  },
   
   cloudinaryId: {
     type: String,

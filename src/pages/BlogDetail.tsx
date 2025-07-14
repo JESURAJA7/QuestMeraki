@@ -75,11 +75,11 @@ const BlogDetail: React.FC = () => {
           ...data,
           readTime: data.readTime || '8 min read',
           tags: data.tags || ['React', 'TypeScript', 'Web Development'],
-          views: data.views || Math.floor(Math.random() * 5000) + 100,
+          views: data.views || 0,
           likes: data.likes || Math.floor(Math.random() * 200) + 10,
           author: {
             ...data.author,
-            avatar: data.author.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&dpr=1'
+            avatar: data.author.avatar || 'https://res.cloudinary.com/dczicfhcv/image/upload/v1752469451/person_hvkhav.png'
           }
         };
 

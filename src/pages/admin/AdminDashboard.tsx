@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { PlusCircle, List, LogOut, FileText, BarChart3, TrendingUp, Eye, Calendar, Activity, Flame, ArrowUp } from 'lucide-react';
+import { PlusCircle, List, LogOut, FileText, BarChart3, TrendingUp, Eye, Calendar, Activity, Flame, ArrowUp, Download, Users, Clock } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useState, useEffect } from 'react';
 
@@ -10,6 +10,20 @@ interface DashboardStats {
   publishedBlogs: number;
   totalViews: number;
   trendingPostsCount: number;
+}
+
+interface DownloadStats {
+  totalDownloads: number;
+  total: number;
+  today: number;
+  thisWeek: number;
+  thisMonth: number;
+  byRole: Record<string, number>;
+  topBlogs: Array<{
+    blogId: string;
+    blogTitle: string;
+    count: number;
+  }>;
 }
 
 interface TrendingBlog {
@@ -27,7 +41,7 @@ interface TrendingBlog {
 
 interface RecentActivity {
   id: string;
-  type: 'blog_published' | 'user_registered' | 'blog_viewed';
+  type: 'blog_published' | 'user_registered' | 'blog_viewed' | 'blog_downloaded';
   title: string;
   time: string;
   user?: string;
@@ -41,7 +55,17 @@ export default function AdminDashboard() {
     totalViews: 0,
     trendingPostsCount: 0
   });
-  
+
+  const [downloadStats, setDownloadStats] = useState<DownloadStats>({
+    totalDownloads: 0,
+    total: 0,
+    today: 0,
+    thisWeek: 0,
+    thisMonth: 0,
+    byRole: {},
+    topBlogs: []
+  });
+
   const [trendingBlogs, setTrendingBlogs] = useState<TrendingBlog[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,9 +93,14 @@ export default function AdminDashboard() {
       };
 
       // Fetch all data in parallel
-      const [statsResponse, trendingResponse] = await Promise.all([
+      const [statsResponse, trendingResponse, downloadStatsResponse] = await Promise.all([
         fetch(`${API_URL}/admin/stats`, { headers }),
-        fetch(`${API_URL}/admin/trending-blogs?limit=5`, { headers })
+        fetch(`${API_URL}/admin/trending-blogs?limit=5`, { headers }),
+        fetch(`${API_URL}/blogs/downloads/stats`, { headers }).catch(() => {
+          console.warn('Download stats endpoint not found, using fallback');
+          return { ok: false, json: () => Promise.resolve({ data: {} }) };
+        })
+
       ]);
 
       // Handle stats response
@@ -103,11 +132,22 @@ export default function AdminDashboard() {
         console.error('Failed to fetch trending blogs:', await trendingResponse.text());
       }
 
-      // Mock recent activity (you can create a backend endpoint for this too)
+      // Handle download stats response 
+      if (downloadStatsResponse && downloadStatsResponse.ok) {
+        const downloadData = await downloadStatsResponse.json();
+        //console.log('Download stats:', downloadData);
+        setDownloadStats(downloadData.data || downloadData);
+      } else {
+        console.log('Download stats not available or endpoint not found');
+      }
+
+      // Enhanced recent activity with downloads
       setRecentActivity([
         { id: '1', type: 'blog_published', title: 'New article published', time: '2 hours ago', user: 'John Doe' },
-        { id: '2', type: 'blog_viewed', title: 'Article got 100+ views', time: '4 hours ago', user: 'AI Article' },
-        { id: '3', type: 'blog_viewed', title: 'Trending post milestone reached', time: '6 hours ago', user: 'React Guide' }
+        { id: '2', type: 'blog_downloaded', title: 'Article downloaded as PDF', time: '3 hours ago', user: 'Jane Smith' },
+        { id: '3', type: 'blog_viewed', title: 'Article got 100+ views', time: '4 hours ago', user: 'AI Article' },
+        { id: '4', type: 'blog_downloaded', title: 'Research paper downloaded', time: '5 hours ago', user: 'Dr. Wilson' },
+        { id: '5', type: 'blog_viewed', title: 'Trending post milestone reached', time: '6 hours ago', user: 'React Guide' }
       ]);
 
     } catch (error) {
@@ -121,7 +161,7 @@ export default function AdminDashboard() {
   const StatCard = ({ icon: Icon, title, value, subtitle, color, trend }: {
     icon: any;
     title: string;
-    value: string | number;
+    value: string | number | undefined | null;
     subtitle?: string;
     color: string;
     trend?: number;
@@ -142,7 +182,9 @@ export default function AdminDashboard() {
         </div>
         <div>
           <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mb-1">{value.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-gray-900 mb-1">
+            {value !== undefined && value !== null ? value.toLocaleString() : '0'}
+          </p>
           {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
         </div>
       </div>
@@ -186,12 +228,11 @@ export default function AdminDashboard() {
   const TrendingBlogCard = ({ blog, rank }: { blog: TrendingBlog; rank: number }) => (
     <div className="group relative bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
       <div className="flex items-start space-x-4">
-        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-          rank === 1 ? 'bg-yellow-100 text-yellow-800' :
+        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${rank === 1 ? 'bg-yellow-100 text-yellow-800' :
           rank === 2 ? 'bg-gray-100 text-gray-800' :
-          rank === 3 ? 'bg-orange-100 text-orange-800' :
-          'bg-blue-50 text-blue-800'
-        }`}>
+            rank === 3 ? 'bg-orange-100 text-orange-800' :
+              'bg-blue-50 text-blue-800'
+          }`}>
           {rank}
         </div>
         <div className="flex-1 min-w-0">
@@ -227,6 +268,7 @@ export default function AdminDashboard() {
         case 'blog_published': return <FileText className="w-4 h-4 text-green-600" />;
         case 'user_registered': return <Activity className="w-4 h-4 text-blue-600" />;
         case 'blog_viewed': return <Eye className="w-4 h-4 text-orange-600" />;
+        case 'blog_downloaded': return <Download className="w-4 h-4 text-purple-600" />;
       }
     };
 
@@ -246,6 +288,16 @@ export default function AdminDashboard() {
         </div>
       </div>
     );
+  };
+
+  // Get most popular role
+  const getMostPopularRole = () => {
+    if (!downloadStats.byRole || Object.keys(downloadStats.byRole).length === 0) {
+      return 'N/A';
+    }
+
+    const sortedRoles = Object.entries(downloadStats.byRole).sort(([, a], [, b]) => b - a);
+    return sortedRoles[0] ? sortedRoles[0][0].charAt(0).toUpperCase() + sortedRoles[0][0].slice(1) : 'N/A';
   };
 
   if (isLoading) {
@@ -286,13 +338,13 @@ export default function AdminDashboard() {
       {/* Enhanced Header */}
       <div className="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white overflow-hidden">
         <div className="absolute inset-0 bg-black/20"></div>
-        
+
         {/* Animated Background Elements */}
         <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full animate-pulse"></div>
         <div className="absolute bottom-10 right-10 w-24 h-24 bg-yellow-300/20 rounded-full animate-bounce"></div>
         <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-pink-300/20 rounded-full animate-ping"></div>
         <div className="absolute top-20 right-1/4 w-12 h-12 bg-blue-300/30 rounded-full animate-pulse delay-1000"></div>
-        
+
         <div className="relative z-10 container mx-auto px-6 py-12">
           <div className="flex items-center justify-between">
             <div>
@@ -314,7 +366,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
-            
+
             <button
               onClick={logout}
               className="flex items-center space-x-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl transition-all duration-300 group"
@@ -327,8 +379,8 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        {/* Updated Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Enhanced Stats Grid with Download Analytics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
           <StatCard
             icon={FileText}
             title="Total Articles"
@@ -346,6 +398,22 @@ export default function AdminDashboard() {
             trend={15.7}
           />
           <StatCard
+            icon={Download}
+            title="Total Downloads"
+            value={downloadStats?.totalDownloads || 0}
+            subtitle="PDF downloads"
+            color="bg-purple-500"
+            trend={25.3}
+          />
+          {/* <StatCard
+            icon={Clock}
+            title="Today's Downloads"
+            value={downloadStats?.today || 0}
+            subtitle="Downloads today"
+            color="bg-indigo-500"
+            trend={12.8}
+          /> */}
+          <StatCard
             icon={Flame}
             title="Trending Posts"
             value={stats.trendingPostsCount}
@@ -358,7 +426,7 @@ export default function AdminDashboard() {
             title="Published"
             value={stats.publishedBlogs}
             subtitle="Live articles"
-            color="bg-purple-500"
+            color="bg-pink-500"
             trend={12.5}
           />
         </div>
@@ -370,7 +438,7 @@ export default function AdminDashboard() {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Quick Actions</h2>
               <p className="text-gray-600">Manage your content and track performance</p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <ActionCard
                 to="/admin/create-post"
@@ -379,7 +447,16 @@ export default function AdminDashboard() {
                 description="Write and publish fresh content for your audience"
                 color="bg-indigo-500"
               />
-              
+
+              <ActionCard
+                to="/admin/manage-downloads"
+                icon={Download}
+                title="Download Analytics"
+                description="Track PDF downloads and user engagement metrics"
+                color="bg-purple-500"
+                badge="New"
+              />
+
               <ActionCard
                 to="/admin/trending-blogs"
                 icon={Flame}
@@ -388,7 +465,7 @@ export default function AdminDashboard() {
                 color="bg-orange-500"
                 badge="Hot"
               />
-              
+
               <ActionCard
                 to="/admin/manage-posts"
                 icon={List}
@@ -396,14 +473,84 @@ export default function AdminDashboard() {
                 description="Edit, organize, and maintain your published articles"
                 color="bg-green-500"
               />
-              
-              <ActionCard
-                to="/my-blogs"
-                icon={BarChart3}
-                title="My Blogs"
-                description="Track performance and engagement metrics"
-                color="bg-purple-500"
-              />
+            </div>
+
+            {/* Download Analytics Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Download className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">Download Analytics</h3>
+                    <p className="text-sm text-gray-600">PDF download insights and trends</p>
+                  </div>
+                </div>
+                <Link
+                  to="/admin/downloads"
+                  className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200"
+                >
+                  View details →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600">This Week</span>
+                    <Users className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">{downloadStats?.thisWeek || 0}</p>
+                  <p className="text-xs text-gray-500">downloads</p>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600">This Month</span>
+                    <BarChart3 className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">{downloadStats?.thisMonth || 0}</p>
+                  <p className="text-xs text-gray-500">downloads</p>
+                </div>
+
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-600">Top User Role</span>
+                    <Activity className="w-4 h-4 text-green-500" />
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">{getMostPopularRole()}</p>
+                  <p className="text-xs text-gray-500">most active</p>
+                </div>
+              </div>
+
+              {/* Top Downloaded Blogs */}
+              {downloadStats.topBlogs && downloadStats.topBlogs.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Most Downloaded Blogs</h4>
+                  <div className="space-y-3">
+                    {downloadStats.topBlogs.slice(0, 3).map((blog, index) => (
+                      <div key={blog.blogId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-800' :
+                            index === 1 ? 'bg-gray-100 text-gray-800' :
+                              'bg-orange-100 text-orange-800'
+                            }`}>
+                            {index + 1}
+                          </div>
+                          <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                            {blog.blogTitle}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Download className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-semibold text-gray-700">{blog.count}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Trending Blogs Section */}
@@ -425,7 +572,7 @@ export default function AdminDashboard() {
                   View all →
                 </Link>
               </div>
-              
+
               <div className="space-y-4">
                 {trendingBlogs.length > 0 ? (
                   trendingBlogs.map((blog, index) => (
@@ -451,13 +598,13 @@ export default function AdminDashboard() {
                   <Activity className="w-4 h-4 text-gray-600" />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 {recentActivity.map((activity) => (
                   <ActivityItem key={activity.id} activity={activity} />
                 ))}
               </div>
-              
+
               <div className="mt-6 pt-4 border-t border-gray-100">
                 <Link
                   to="/admin/activity-log"
@@ -479,8 +626,18 @@ export default function AdminDashboard() {
                   <TrendingUp className="w-8 h-8 opacity-80" />
                 </div>
               </div>
-              
+
               <div className="bg-gradient-to-r from-purple-400 to-pink-500 rounded-xl p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm opacity-90">Weekly Downloads</p>
+                    <p className="text-2xl font-bold">{downloadStats.thisWeek}</p>
+                  </div>
+                  <Download className="w-8 h-8 opacity-80" />
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-orange-400 to-red-500 rounded-xl p-4 text-white">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm opacity-90">Avg. Read Time</p>

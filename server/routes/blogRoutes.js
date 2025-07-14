@@ -4,6 +4,9 @@ import User from '../model/User.js';
 import auth from '../middleware/auth.js';
 import upload from '../middleware/upload.js';
 import cloudinary from '../config/cloudinary.js';
+import { trackDownload, getDownloadStats, getAllDownloads,getDownloads ,createDownload,exportToCSV,deleteDownloads,getAnalytics} from '../Controllers/downloadController.js';
+import { check } from 'express-validator';
+
 
 const router = express.Router();
 
@@ -424,5 +427,31 @@ router.get('/search', async (req, res) => {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 });
+
+// Track a download
+router.post('/downloads',  
+  [
+    check('blogId', 'Blog ID is required').not().isEmpty(),
+    check('blogTitle', 'Blog title is required').not().isEmpty(),
+    check('name', 'Name is required').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail(),
+    //check('purpose', 'Purpose is required').isIn(['personal', 'educational', 'professional', 'research', 'other'])
+  ],
+ 
+  trackDownload
+);
+
+// Get download statistics (admin only)
+router.get('/downloads/stats', auth, getDownloadStats);
+
+// Get all downloads (admin only)
+// router.get('/downloads', auth, getAllDownloads);
+
+router.get('/downloads', auth, getDownloads);
+router.get('/downloads/stats', auth, getDownloadStats);
+router.get('/downloads/export', auth, exportToCSV);
+router.get('/downloads/analytics', auth, getAnalytics);
+//router.get('/:id', auth, getDownloadById);
+router.delete('/downloads', auth, deleteDownloads);
 
 export default router;

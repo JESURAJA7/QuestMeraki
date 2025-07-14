@@ -2,12 +2,7 @@ import { useState, useEffect } from 'react';
 import { Download, ArrowRight, Clock, User, TrendingUp, BookOpen, Star, Eye, Heart, Bookmark, Share2, ChevronRight, Sparkles, Calendar, Tag, ChevronLeft } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { Link } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay, EffectCoverflow } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/autoplay';
+import DownloadModal, { UserDownloadData } from '../components/DownloadModal';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -40,6 +35,8 @@ export default function Home() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
 
   // Pagination settings
   const BLOGS_PER_PAGE = 6;
@@ -97,180 +94,270 @@ export default function Home() {
     }
   };
 
-  const downloadBlogAsPDF = async (blog: Blog) => {
-    setDownloadingId(blog._id);
+  const handleDownloadClick = (blog: Blog) => {
+    setSelectedBlog(blog);
+    setShowDownloadModal(true);
+  };
+
+  const handleDownloadSubmit = async (userData: UserDownloadData) => {
+    console.log('Download data:', userData);
+    if (!selectedBlog) return;
+
+    setDownloadingId(selectedBlog._id);
+
     try {
-      const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
-      let yPosition = margin;
-
-      // ===== COVER PAGE =====
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(24);
-      pdf.setTextColor(30, 30, 100);
-      pdf.text(blog.title, pageWidth / 2, pageHeight / 3, { align: 'center' });
-
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(14);
-      pdf.setTextColor(80, 80, 80);
-      pdf.text(`By ${blog.author.name}`, pageWidth / 2, pageHeight / 3 + 20, { align: 'center' });
-
-      pdf.text(
-        new Date(blog.createdAt).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
+      // Store download data in database
+      await fetch(`${API_URL}/blogs/downloads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...userData,
+          downloadedAt: new Date().toISOString(),
+          userAgent: navigator.userAgent,
         }),
-        pageWidth / 2,
-        pageHeight / 3 + 35,
-        { align: 'center' }
-      );
-
-      pdf.addPage();
-      yPosition = margin;
-
-      // ===== HEADER =====
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(0, 0, pageWidth, 40, 'F');
-
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(16);
-      pdf.setTextColor(50, 50, 150);
-      pdf.text('QuestMeraki', margin, 25);
-
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text('Premium Blog Content', pageWidth - margin, 25, { align: 'right' });
-
-      yPosition = 50;
-
-      // ===== TITLE BLOCK =====
-      pdf.setFillColor(30, 30, 100);
-      pdf.rect(margin, yPosition - 10, pageWidth - 2 * margin, 20, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(blog.title, pageWidth / 2, yPosition + 3, { align: 'center' });
-
-      yPosition += 25;
-
-      // ===== METADATA =====
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(12);
-      pdf.setTextColor(80, 80, 80);
-
-      const authorText = `👤 ${blog.author.name}`;
-      const categoryText = `🏷️ ${blog.category}`;
-      const dateText = `📅 ${new Date(blog.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })}`;
-
-      const metadataSpacing = (pageWidth - 2 * margin) / 3;
-
-      pdf.text(authorText, margin, yPosition);
-      pdf.text(categoryText, margin + metadataSpacing, yPosition);
-      pdf.text(dateText, margin + metadataSpacing * 2, yPosition);
-
-      yPosition += 20;
-
-      // ===== DIVIDER =====
-      pdf.setDrawColor(200, 200, 200);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 20;
-
-      // ===== TEXT HELPER =====
-      const addText = (
-        text: string,
-        fontSize: number,
-        isBold = false,
-        color: [number, number, number] = [0, 0, 0],
-        lineHeight = 1.5
-      ) => {
-        if (!text.trim()) return;
-
-        pdf.setFontSize(fontSize);
-        pdf.setTextColor(...color);
-        pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
-
-        const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
-        const lineHeightPx = fontSize * lineHeight;
-        const spaceNeeded = lines.length * lineHeightPx;
-
-        if (yPosition + spaceNeeded > pageHeight - margin) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-
-        pdf.text(lines, margin, yPosition);
-        yPosition += spaceNeeded + fontSize * 0.5;
-      };
-
-      // ===== CLEAN HTML & PARSE PARAGRAPHS =====
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = blog.content;
-
-      const unwantedElements = tempDiv.querySelectorAll('script, style, iframe');
-      unwantedElements.forEach(el => el.remove());
-
-      const rawParagraphs: string[] = [];
-      tempDiv.querySelectorAll('p, div').forEach(node => {
-        const text = node.textContent?.trim();
-        if (text && !/^[\s\u00A0]*$/.test(text)) {
-          rawParagraphs.push(text);
-        }
       });
 
-      const paragraphs = rawParagraphs.length
-        ? rawParagraphs
-        : (tempDiv.textContent || '')
-          .split(/\r?\n+/)
-          .map(p => p.trim())
-          .filter(p => p.length > 0);
+      // Generate and download PDF
+      await downloadBlogAsPDF(selectedBlog);
 
-      // ===== RENDER PARAGRAPHS =====
-      for (const para of paragraphs) {
-        const isQuote = para.startsWith('"') || para.startsWith('"');
-        const style: { fontSize: number; isBold: boolean; color: [number, number, number] } = isQuote
-          ? { fontSize: 11, isBold: true, color: [100, 50, 150] }
-          : { fontSize: 11, isBold: false, color: [60, 60, 60] };
-        addText(para, style.fontSize, style.isBold, style.color);
-      }
-
-      // ===== FOOTER ON ALL PAGES =====
-      const totalPages = pdf.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        pdf.setDrawColor(220, 220, 220);
-        pdf.setLineWidth(0.5);
-        pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
-
-        pdf.setFontSize(8);
-        pdf.setTextColor(100, 100, 100);
-        pdf.text(`QuestMeraki`, margin, pageHeight - 8);
-        pdf.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
-      }
-
-      // ===== SAVE FILE =====
-      const fileName = `${blog.title
-        .replace(/[^a-z0-9]/gi, '_')
-        .replace(/_+/g, '_')
-        .toLowerCase()}.pdf`;
-
-      pdf.save(fileName);
-
+      // Close modal
+      setShowDownloadModal(false);
+      setSelectedBlog(null);
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      setError('Failed to generate PDF. Please try again.');
+      console.error('Failed to process download:', error);
+      setError('Failed to process download. Please try again.');
     } finally {
       setDownloadingId(null);
     }
   };
+
+  const downloadBlogAsPDF = async (blog: Blog) => {
+     setDownloadingId(blog._id);
+     try {
+       const pdf = new jsPDF();
+       const pageWidth = pdf.internal.pageSize.getWidth();
+       const pageHeight = pdf.internal.pageSize.getHeight();
+       const margin = 20;
+       let yPosition = margin;
+ 
+       // Helper function to add text with proper spacing
+       const addText = (
+         text: string,
+         fontSize: number,
+         isBold = false,
+         color: [number, number, number] = [0, 0, 0],
+         spacing = 5
+       ) => {
+         if (!text.trim()) return;
+ 
+         // Clean the text for PDF
+         const cleanText = text
+           .replace(/\r\n/g, ' ')
+           .replace(/\r/g, ' ')
+           .replace(/\n/g, ' ')
+           .replace(/\t/g, ' ')
+           .replace(/\s+/g, ' ')
+           .trim();
+ 
+         pdf.setFontSize(fontSize);
+         pdf.setTextColor(...color);
+         pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
+ 
+         const lines = pdf.splitTextToSize(cleanText, pageWidth - 2 * margin);
+         const lineHeight = fontSize * 0.4; // Reduced line height multiplier
+         const totalHeight = lines.length * lineHeight;
+ 
+         // Check if we need a new page
+         if (yPosition + totalHeight > pageHeight - margin) {
+           pdf.addPage();
+           yPosition = margin;
+         }
+ 
+         // Add the text
+         lines.forEach((line: string, index: number) => {
+           pdf.text(line, margin, yPosition + (index * lineHeight));
+         });
+ 
+         yPosition += totalHeight + spacing; // Add controlled spacing
+       };
+ 
+       // ===== COVER PAGE =====
+       pdf.setFont('helvetica', 'bold');
+       pdf.setFontSize(24);
+       pdf.setTextColor(30, 30, 100);
+       
+       // Split title if too long
+       const titleLines = pdf.splitTextToSize(blog.title, pageWidth - 2 * margin);
+       const titleStartY = pageHeight / 3;
+       titleLines.forEach((line: string, index: number) => {
+         pdf.text(line, pageWidth / 2, titleStartY + (index * 10), { align: 'center' });
+       });
+ 
+       pdf.setFont('helvetica', 'normal');
+       pdf.setFontSize(14);
+       pdf.setTextColor(80, 80, 80);
+       pdf.text(`By ${blog.author.name}`, pageWidth / 2, titleStartY + (titleLines.length * 10) + 15, { align: 'center' });
+       pdf.text(
+         new Date(blog.createdAt).toLocaleDateString('en-US', {
+           year: 'numeric',
+           month: 'long',
+           day: 'numeric',
+         }),
+         pageWidth / 2,
+         titleStartY + (titleLines.length * 10) + 30,
+         { align: 'center' }
+       );
+ 
+       pdf.addPage();
+       yPosition = margin;
+ 
+       // ===== HEADER =====
+       pdf.setFillColor(240, 240, 240);
+       pdf.rect(0, 0, pageWidth, 30, 'F');
+ 
+       pdf.setFont('helvetica', 'bold');
+       pdf.setFontSize(16);
+       pdf.setTextColor(50, 50, 150);
+       pdf.text('QuestMeraki', margin, 20);
+ 
+       pdf.setFont('helvetica', 'normal');
+       pdf.setFontSize(8);
+       pdf.setTextColor(100, 100, 100);
+       pdf.text('Premium Blog Content', pageWidth - margin, 20, { align: 'right' });
+ 
+       yPosition = 45;
+ 
+       // ===== TITLE =====
+       addText(blog.title, 18, true, [30, 30, 100], 10);
+ 
+       // ===== METADATA =====
+       const metadata = `Author: ${blog.author.name} | Category: ${blog.category} | Date: ${new Date(blog.createdAt).toLocaleDateString()}`;
+       addText(metadata, 10, false, [100, 100, 100], 15);
+ 
+       // ===== DIVIDER =====
+       pdf.setDrawColor(200, 200, 200);
+       pdf.setLineWidth(0.5);
+       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+       yPosition += 15;
+ 
+       // ===== CONTENT PROCESSING =====
+       const tempDiv = document.createElement('div');
+       tempDiv.innerHTML = blog.content;
+ 
+       // Remove unwanted elements
+       const unwantedElements = tempDiv.querySelectorAll('script, style, img');
+       unwantedElements.forEach(el => el.remove());
+ 
+       // Extract text content with structure
+       const processElement = (element: Element): void => {
+         const tagName = element.tagName?.toLowerCase();
+         const text = element.textContent?.trim() || '';
+ 
+         if (!text) return;
+ 
+         switch (tagName) {
+           case 'h1':
+           case 'h2':
+           case 'h3':
+           case 'h4':
+             addText(text, 14, true, [50, 50, 150], 8);
+             break;
+           case 'h5':
+           case 'h6':
+             addText(text, 12, true, [100, 50, 150], 6);
+             break;
+           case 'p':
+             if (text.length > 0) {
+               addText(text, 10, false, [60, 60, 60], 6);
+             }
+             break;
+           case 'li':
+             addText(`• ${text}`, 10, false, [60, 60, 60], 4);
+             break;
+           case 'strong':
+           case 'b':
+             addText(text, 10, true, [40, 40, 40], 4);
+             break;
+           default:
+             if (text.length > 20) { // Only add substantial text content
+               addText(text, 10, false, [60, 60, 60], 5);
+             }
+         }
+       };
+ 
+       // Process all elements
+       const allElements = tempDiv.querySelectorAll('*');
+       const processedTexts = new Set<string>();
+ 
+       allElements.forEach(element => {
+         const text = element.textContent?.trim() || '';
+         // Avoid duplicate content and clean special characters
+         const cleanText = text
+           .replace(/\r\n/g, ' ')
+           .replace(/\r/g, ' ')
+           .replace(/\n/g, ' ')
+           .replace(/\t/g, ' ')
+           .replace(/\s+/g, ' ')
+           .trim();
+         
+         if (cleanText && cleanText.length > 10 && !processedTexts.has(cleanText)) {
+           processedTexts.add(cleanText);
+           processElement(element);
+         }
+       });
+ 
+       // If no structured content found, process as plain text
+       if (processedTexts.size === 0) {
+         const plainText = tempDiv.textContent || '';
+         const cleanPlainText = plainText
+           .replace(/\r\n/g, ' ')
+           .replace(/\r/g, ' ')
+           .replace(/\n/g, ' ')
+           .replace(/\t/g, ' ')
+           .replace(/\s+/g, ' ')
+           .trim();
+         
+         const paragraphs = cleanPlainText
+           .split(/\s{2,}/)
+           .map(p => p.trim())
+           .filter(p => p.length > 0);
+ 
+         paragraphs.forEach(paragraph => {
+           addText(paragraph, 10, false, [60, 60, 60], 6);
+         });
+       }
+ 
+       // ===== FOOTER ON ALL PAGES =====
+       const totalPages = pdf.getNumberOfPages();
+       for (let i = 1; i <= totalPages; i++) {
+         pdf.setPage(i);
+         pdf.setDrawColor(220, 220, 220);
+         pdf.setLineWidth(0.5);
+         pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+ 
+         pdf.setFontSize(8);
+         pdf.setTextColor(100, 100, 100);
+         pdf.text('QuestMeraki', margin, pageHeight - 8);
+         pdf.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+       }
+ 
+       // ===== SAVE FILE =====
+       const fileName = `${blog.title
+         .replace(/[^a-z0-9]/gi, '_')
+         .replace(/_+/g, '_')
+         .toLowerCase()}.pdf`;
+ 
+       pdf.save(fileName);
+ 
+     } catch (error) {
+       console.error('Error generating PDF:', error);
+       setError('Failed to generate PDF. Please try again.');
+     } finally {
+       setDownloadingId(null);
+     }
+   };
 
   // Get current page blogs
   const getCurrentPageBlogs = () => {
@@ -327,13 +414,12 @@ export default function Home() {
               key={index}
               onClick={() => typeof page === 'number' && setCurrentPage(page)}
               disabled={page === '...'}
-              className={`min-w-[40px] h-10 rounded-xl font-medium transition-all duration-300 ${
-                currentPage === page
+              className={`min-w-[40px] h-10 rounded-xl font-medium transition-all duration-300 ${currentPage === page
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105'
                   : page === '...'
-                  ? 'bg-transparent text-gray-400 cursor-default'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-md hover:scale-105'
-              }`}
+                    ? 'bg-transparent text-gray-400 cursor-default'
+                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-md hover:scale-105'
+                }`}
             >
               {page}
             </button>
@@ -352,13 +438,6 @@ export default function Home() {
       </div>
     );
   };
-
-  const bannerImages = [
-    "https://res.cloudinary.com/dczicfhcv/image/upload/v1751441511/QuestMeraki_Cleaned_Banner_embd5z.png",
-    "https://res.cloudinary.com/dczicfhcv/image/upload/v1750413681/blog_images/d1o6ahqrigtznldy6ff9.png",
-    "https://res.cloudinary.com/dczicfhcv/image/upload/v1750411273/blog_images/v1wqsmhixp0o6hizepdn.png",
-    "https://res.cloudinary.com/dczicfhcv/image/upload/v1750231598/blog_images/huuj7i4cea1mees6c5sm.png"
-  ];
 
   if (loading) {
     return (
@@ -390,7 +469,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-3">Something went wrong</h3>
             <p className="text-gray-600 mb-6">{error}</p>
-            <button 
+            <button
               onClick={() => window.location.reload()}
               className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
@@ -407,7 +486,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 mt-5">
- {/* Animated Hero Banner */}
+      {/* Animated Hero Banner */}
       <section className="relative py-24 overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
@@ -465,6 +544,13 @@ export default function Home() {
                 </Link>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
               </button>
+              {/* <Link
+                to="/admin/downloads"
+                className="group border-2 border-indigo-600 text-indigo-600 px-8 py-4 rounded-xl font-semibold hover:bg-indigo-600 hover:text-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1 relative overflow-hidden"
+              >
+                <span className="relative z-10">Admin Dashboard</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </Link> */}
             </div>
 
             <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
@@ -526,7 +612,7 @@ export default function Home() {
                       <Bookmark className="w-5 h-5 text-gray-700 group-hover:text-blue-500 transition-colors" />
                     </button>
                     <button
-                      onClick={() => downloadBlogAsPDF(featuredPost)}
+                      onClick={() => handleDownloadClick(featuredPost)}
                       disabled={downloadingId === featuredPost._id}
                       className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white hover:shadow-lg transition-all duration-300 disabled:opacity-50 hover:scale-110"
                       title="Download as PDF"
@@ -669,7 +755,7 @@ export default function Home() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            downloadBlogAsPDF(post);
+                            handleDownloadClick(post);
                           }}
                           disabled={downloadingId === post._id}
                           className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all duration-300 disabled:opacity-50 hover:scale-110"
@@ -890,20 +976,20 @@ export default function Home() {
         )}
       </div>
 
+      {/* Download Modal */}
+      <DownloadModal
+        isOpen={showDownloadModal}
+        onClose={() => {
+          setShowDownloadModal(false);
+          setSelectedBlog(null);
+        }}
+        onDownload={handleDownloadSubmit}
+        blogTitle={selectedBlog?.title || '' }
+        blogId={selectedBlog?._id || ''}
+        isDownloading={downloadingId !== null}
+      />
+
       <style>{`
-        .swiper-pagination-bullet-custom {
-          width: 12px;
-          height: 12px;
-          background: rgba(255, 255, 255, 0.5);
-          border-radius: 50%;
-          transition: all 0.3s ease;
-        }
-        
-        .swiper-pagination-bullet-active-custom {
-          background: white;
-          transform: scale(1.2);
-        }
-        
         .line-clamp-2 {
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -916,6 +1002,36 @@ export default function Home() {
           -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
           overflow: hidden;
+        }
+        
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fade-in-up 0.6s ease-out forwards;
+        }
+        
+        @keyframes gradient-x {
+          0%, 100% {
+            background-size: 200% 200%;
+            background-position: left center;
+          }
+          50% {
+            background-size: 200% 200%;
+            background-position: right center;
+          }
+        }
+        
+        .animate-gradient-x {
+          animation: gradient-x 3s ease infinite;
         }
       `}</style>
     </div>
